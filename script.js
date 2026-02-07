@@ -324,3 +324,24 @@ function mostrarToast(mensaje) {
         setTimeout(() => toast.remove(), 500);
     }, 2500);
 }
+// --- FUNCIÓN DEL BUSCADOR 🔍 ---
+function buscarProducto() {
+    // 1. Capturamos lo que el usuario escribe en el cuadrito de búsqueda
+    const input = document.getElementById('buscador');
+    const textoBusqueda = input.value.toLowerCase();
+    
+    // 2. Seleccionamos todas las tarjetas de productos que hay en la pantalla
+    const tarjetas = document.querySelectorAll('.producto');
+
+    tarjetas.forEach(tarjeta => {
+        // 3. Buscamos el nombre (el <h6>) dentro de cada tarjeta
+        const nombreProducto = tarjeta.querySelector('h6').innerText.toLowerCase();
+        
+        // 4. Si el nombre tiene lo que escribimos, se muestra; si no, se oculta
+        if (nombreProducto.includes(textoBusqueda)) {
+            tarjeta.style.display = "block";  // Muestra ✅
+        } else {
+            tarjeta.style.display = "none";   // Oculta ❌
+        }
+    });
+}

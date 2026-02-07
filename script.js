@@ -1,7 +1,7 @@
 // ==========================================
 // 🔹 CONFIGURACIÓN GLOBAL
 // ==========================================
-const URL_SHEETS = "https://script.google.com/macros/s/AKfycbwdY0Jfg6X2TwW_-iAh0WS3vmkIX3a2FMazLRVzm9XwqqWuj91cBNSyzMX8xGX46_4R/exec";
+const URL_SHEETS = "https://script.google.com/macros/s/AKfycbx3llkL4WfrDORPXElfA6uv7-WGfkkB68uMpXaeJ0mDaekVKRcKxzsCTo_LZvols_tN/exec";
 
 let carrito = [];
 let productosGlobal = [];
@@ -72,26 +72,23 @@ function renderizarProductos(data) {
     contenedor.innerHTML = htmlFinal || "<p class='text-center'>No hay productos disponibles.</p>";
 }
 
-// --- VISTA DE DETALLE (CORREGIDA) ---
+// --- VISTA DE DETALLE ---
 function verDetalle(index) {
     const p = productosGlobal[index];
     if (!p) return;
     
     productoSeleccionado = { ...p, indexGlobal: index };
 
-    // 1. Cargamos imagen, nombre y precio 🍔
     document.getElementById("detalle-img").src = p.imagen;
     document.getElementById("detalle-nombre").innerText = p.nombre.toUpperCase();
     document.getElementById("detalle-precio").innerText = `$${p.precio.toLocaleString('es-AR')}`;
     document.getElementById("cant-detalle").value = 1;
 
-    // 2. Cargamos la descripción (Usando el ID de tu HTML) 📝
     const descripcionElemento = document.getElementById("detalle-descripcion");
     if (descripcionElemento) {
         descripcionElemento.innerText = p.detalle || 'Deliciosa opción de La Reco.';
     }
 
-    // 3. Control de vistas ⚡
     document.getElementById("hero").classList.add("d-none");
     document.getElementById("contenedor-catalogo").classList.add("d-none");
     document.getElementById("vista-detalle").classList.remove("d-none");
@@ -99,7 +96,6 @@ function verDetalle(index) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Vinculación del botón añadir
 document.getElementById("btn-agregar-detalle").onclick = () => {
     const cant = parseInt(document.getElementById("cant-detalle").value);
     if(productoSeleccionado) {
@@ -109,17 +105,13 @@ document.getElementById("btn-agregar-detalle").onclick = () => {
 
 // --- LÓGICA DE COMPRA ---
 function agregarDesdeDetalle(prod, cant) {
-    // Ya no filtramos por talle, solo por nombre
     const existe = carrito.find(p => p.nombre === prod.nombre);
-    
     if (existe) {
         existe.cantidad += cant;
     } else {
         carrito.push({ ...prod, cantidad: cant });
     }
-
     actualizarCarrito();
-   
     
     const btn = document.getElementById("btn-agregar-detalle");
     btn.innerHTML = "✅ ¡AGREGADO!";
@@ -136,39 +128,38 @@ function actualizarCarrito() {
     const contadorNav = document.getElementById("contadorNav");
     let html = "", total = 0, items = 0;
 
-    // Usamos (p, i) para tener el producto y su índice (i) 🔢
-        carrito.forEach((p, i) => { 
-            const sub = p.precio * p.cantidad;
-            total += sub; 
-            items += p.cantidad;
-            
-            html += `
-                <div class="mb-4 border-bottom pb-3">
-                    <div class="row gx-2 align-items-center">
-                        <div class="col-3">
-                            <img src="${p.imagen}" class="img-fluid rounded shadow-sm" style="height:60px; object-fit:cover;">
-                        </div>
-                        <div class="col-9">
-                            <h6 class="mb-0 fw-bold text-uppercase" style="font-size: 0.85rem;">${p.nombre}</h6>
+    carrito.forEach((p, i) => { 
+        const sub = p.precio * p.cantidad;
+        total += sub; 
+        items += p.cantidad;
+        
+        html += `
+            <div class="mb-4 border-bottom pb-3">
+                <div class="row gx-2 align-items-center">
+                    <div class="col-3">
+                        <img src="${p.imagen}" class="img-fluid rounded shadow-sm" style="height:60px; object-fit:cover;">
+                    </div>
+                    <div class="col-9">
+                        <h6 class="mb-0 fw-bold text-uppercase" style="font-size: 0.85rem;">${p.nombre}</h6>
+                    </div>
+                </div>
+                <div class="row gx-2 align-items-center mt-2">
+                    <div class="col-5">
+                        <div class="input-group input-group-sm border rounded" style="width: 70%;">
+                            <button class="btn btn-sm" onclick="modificarCantidadCarrito(${i}, -1)"><i class="bi bi-dash"></i></button>
+                            <span class="form-control text-center border-0 bg-white">${p.cantidad}</span>
+                            <button class="btn btn-sm" onclick="modificarCantidadCarrito(${i}, 1)"><i class="bi bi-plus"></i></button>
                         </div>
                     </div>
-                    <div class="row gx-2 align-items-center mt-2">
-                        <div class="col-5">
-                            <div class="input-group input-group-sm border rounded" style="width: 70%;">
-                                <button class="btn btn-sm" onclick="modificarCantidadCarrito(${i}, -1)"><i class="bi bi-dash"></i></button>
-                                <span class="form-control text-center border-0 bg-white">${p.cantidad}</span>
-                                <button class="btn btn-sm" onclick="modificarCantidadCarrito(${i}, 1)"><i class="bi bi-plus"></i></button>
-                            </div>
-                        </div>
-                        <div class="col-3 text-center">
-                            <button class="btn btn-sm text-danger fw-bold p-0" style="font-size: 0.65rem;" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
-                        </div>
-                        <div class="col-4 text-end">
-                            <span class="fw-bold">$${sub.toLocaleString('es-AR')}</span>
-                        </div>
+                    <div class="col-3 text-center">
+                        <button class="btn btn-sm text-danger fw-bold p-0" style="font-size: 0.65rem;" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
                     </div>
-                </div>`;
-        });
+                    <div class="col-4 text-end">
+                        <span class="fw-bold">$${sub.toLocaleString('es-AR')}</span>
+                    </div>
+                </div>
+            </div>`;
+    });
 
     if(listaModal) listaModal.innerHTML = carrito.length === 0 ? "<p class='text-center py-4'>Tu carrito está vacío 🍔</p>" : html;
     if(totalModal) totalModal.innerText = total.toLocaleString('es-AR');
@@ -208,11 +199,14 @@ function intentarAbrirCarrito() {
     modal.show();
 }
 
-// --- ENVÍO A WHATSAPP ---
-function enviarPedidoWhatsApp() {
+// --- ENVÍO A WHATSAPP Y SHEETS ---
+async function enviarPedidoWhatsApp() {
     const inputNombre = document.getElementById('nombreCliente');
     const inputDireccion = document.getElementById('direccionModal');
-    
+    const inputTelefono = document.getElementById('telefonoCliente');
+
+    if (!inputNombre || !inputDireccion) return;
+
     if (!inputNombre.value.trim() || !inputDireccion.value.trim()) {
         inputNombre.classList.add("is-invalid");
         inputDireccion.classList.add("is-invalid");
@@ -221,44 +215,67 @@ function enviarPedidoWhatsApp() {
     }
 
     let totalAcumulado = 0;
-    let itemsTexto = "";
+    let itemsTextoSheets = []; 
+    let itemsTextoWhatsApp = ""; 
+
     carrito.forEach(p => {
-        totalAcumulado += (p.precio * p.cantidad);
-        itemsTexto += `✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}\n`;
+        const subtotal = p.precio * p.cantidad;
+        totalAcumulado += subtotal;
+        itemsTextoSheets.push(`${p.cantidad}x ${p.nombre.toUpperCase()}`);
+        itemsTextoWhatsApp += `✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}\n`;
     });
 
     const numeroPedido = obtenerSiguientePedido(); 
     const fechaPedido = new Date().toLocaleString('es-AR');
-    
-   // --- DENTRO DE enviarPedidoWhatsApp ---
 
-let msg = `🛒 *PEDIDO N° ${numeroPedido}*\n`;
-msg += `📅 ${fechaPedido}\n`;
-msg += `👤 *CLIENTE:* ${inputNombre.value.trim().toUpperCase()}\n`;
-msg += `--------------------------\n`;
+    const datosParaSheets = {
+        pedido: numeroPedido,
+        fecha: fechaPedido,
+        cliente: inputNombre.value.trim().toUpperCase(),
+        telefono: inputTelefono ? inputTelefono.value.trim() : "N/A",
+        productos: itemsTextoSheets.join(", "),
+        total: totalAcumulado,
+        direccion: inputDireccion.value.trim().toUpperCase()
+    };
 
-// Aquí recorremos el carrito para listar los productos
-carrito.forEach(p => {
-    msg += `✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}\n`;
-    });
+    // 🚀 ENVIAR A SHEETS (Llamada recuperada)
+    enviarPedidoASheets(datosParaSheets);
 
+    // 📱 MENSAJE DE WHATSAPP
+    let msg = `🛒 *PEDIDO N° ${numeroPedido}*\n`;
+    msg += `📅 ${fechaPedido}\n`;
+    msg += `👤 *CLIENTE:* ${inputNombre.value.trim().toUpperCase()}\n`;
     msg += `--------------------------\n`;
-    msg += `📍 *Dirección:* ${inputDireccion.value.trim()}\n`;
+    msg += itemsTextoWhatsApp;
+    msg += `--------------------------\n`;
+    msg += `📍 *Dirección:* ${inputDireccion.value.trim().toUpperCase()}\n`;
     msg += `💰 *Total a pagar:* $${totalAcumulado.toLocaleString('es-AR')}\n\n`;
-
-    // --- SECCIÓN DE PAGO (Lo que necesitabas recuperar) ---
     msg += `🤝 *MERCADO PAGO:*\n`;
     msg += `📲 TOCÁ EN "INICIAR SESIÓN"\n`;
     msg += `👇 App: link.mercadopago.com.ar/home\n`;
-    msg += `👉 Alias: *alias-de-ajemplo*\n`;
+    msg += `👉 Alias: *walter30mp*\n`;
     msg += `😎 No olvides mandar el comprobante de pago\n\n`;
     msg += `🙏 ¡Muchas gracias. La Reco Burger!`;
 
-    // Abrir WhatsApp
     window.open(`https://wa.me/5491127461954?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// --- NAVEGACIÓN ---
+// --- FUNCIÓN DE SOPORTE SHEETS ---
+async function enviarPedidoASheets(datos) {
+    try {
+        await fetch(URL_SHEETS, {
+            method: 'POST',
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        console.log("Pedido enviado a Sheets ✅");
+    } catch (error) {
+        console.error("Error al guardar en Sheets:", error);
+    }
+}
+
+// --- NAVEGACIÓN Y UTILIDADES ---
 function filtrar(categoria) {
     volverAlCatalogo();
     const productosDOM = document.querySelectorAll('.producto');
@@ -269,34 +286,24 @@ function filtrar(categoria) {
 }
 
 function volverAlCatalogo() {
-    // 1. Mostramos las secciones principales
     document.getElementById("hero").classList.remove("d-none");
     document.getElementById("contenedor-catalogo").classList.remove("d-none");
-    
-    // 2. Ocultamos la vista de detalle
     const vistaDetalle = document.getElementById("vista-detalle");
     if (vistaDetalle) vistaDetalle.classList.add("d-none");
 
-    // 3. ¡Nuevo! Aseguramos que se vean TODOS los productos (resetea el filtro) 📋
-    const productosDOM = document.querySelectorAll('.producto');
-    productosDOM.forEach(p => {
-        p.style.display = "block"; 
-    });
-
-    // 4. Volvemos al inicio de la pantalla ⬆️
+    document.querySelectorAll('.producto').forEach(p => p.style.display = "block");
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function inicializarEventosMenu() {
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => link.addEventListener('click', cerrarMenuMobile));
-}
-
-function cerrarMenuMobile() {
-    const nav = document.getElementById('menuNav');
-    if (nav && nav.classList.contains('show')) {
-        bootstrap.Collapse.getInstance(nav).hide();
-    }
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const nav = document.getElementById('menuNav');
+            if (nav && nav.classList.contains('show')) {
+                bootstrap.Collapse.getInstance(nav).hide();
+            }
+        });
+    });
 }
 
 function obtenerSiguientePedido() {

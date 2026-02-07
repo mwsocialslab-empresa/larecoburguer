@@ -114,7 +114,7 @@ function agregarDesdeDetalle(prod, cant) {
     actualizarCarrito();
     
     const btn = document.getElementById("btn-agregar-detalle");
-    btn.innerHTML = "✅ ¡AGREGADO!";
+    
     btn.disabled = true; 
     setTimeout(() => {
         btn.innerHTML = 'AÑADIR AL PEDIDO <i class="bi bi-cart4"></i>';

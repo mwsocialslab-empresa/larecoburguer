@@ -216,23 +216,13 @@ function intentarAbrirCarrito() {
 // --- ENVÍO A WHATSAPP CON VALIDACIÓN ---
 function enviarPedidoWhatsApp() {
     const inputNombre = document.getElementById('nombreCliente');
-    const inputTelefono = document.getElementById('telefonoCliente');
     const inputDireccion = document.getElementById('direccionModal');
     
-    const campos = [inputNombre, inputTelefono, inputDireccion];
-    let faltaDato = false;
-
-    // Validación visual (Bordes rojos)
-    campos.forEach(campo => {
-        campo.style.borderColor = ""; 
-        if (!campo.value.trim()) {
-            campo.style.borderColor = "red"; 
-            faltaDato = true;
-        }
-    });
-
-    if (faltaDato) {
-        mostrarToast("⚠️ Completa tus datos en rojo");
+    // Validación: resaltamos en rojo si falta algún dato 🚩
+    if (!inputNombre.value.trim() || !inputDireccion.value.trim()) {
+        if (!inputNombre.value.trim()) inputNombre.style.borderColor = "red";
+        if (!inputDireccion.value.trim()) inputDireccion.style.borderColor = "red";
+        mostrarToast("⚠️ Por favor, completa tu nombre y dirección");
         return;
     }
 
@@ -240,39 +230,32 @@ function enviarPedidoWhatsApp() {
     carrito.forEach(p => totalAcumulado += (p.precio * p.cantidad));
 
     const numeroPedido = obtenerSiguientePedido(); 
-    const fechaPedido = new Date().toLocaleString('es-AR');
+    const fechaPedido = new Date().toLocaleString('es-AR', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+    });
     
-    let msg = `🍔 *LA RECO BURGER - PEDIDO N° ${numeroPedido}*\n`;
+    // --- CONSTRUCCIÓN DEL MENSAJE ---
+    let msg = `🛒 PEDIDO N° ${numeroPedido}\n`;
     msg += `📅 ${fechaPedido}\n`;
-    msg += `--------------------------\n`;
-    msg += `👤 *Cliente:* ${inputNombre.value.trim()}\n`;
-    msg += `📍 *Dirección:* ${inputDireccion.value.trim()}\n`;
+    msg += `👤 CLIENTE: ${inputNombre.value.trim().toUpperCase()}\n`; // Agregamos el nombre aquí 👤
     msg += `--------------------------\n`;
     
     carrito.forEach(p => {
-        const extra = p.talle === "Único" ? "" : ` (${p.talle})`;
-        msg += `✅ ${p.cantidad}x ${p.nombre}${extra}\n`;
+        const detalle = (p.talle && p.talle !== "Único") ? ` (${p.talle})` : "";
+        msg += `✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}${detalle}\n`;
     });
     
     msg += `--------------------------\n`;
-    msg += `💰 *TOTAL A PAGAR: $${totalAcumulado.toLocaleString('es-AR')}*\n\n`;
-    msg += `🛵 _El repartidor te avisará al llegar._`;
-
-    // Envío a Google Sheets
-    fetch(URL_SHEETS, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            pedido: numeroPedido,
-            fecha: fechaPedido,
-            nombre: inputNombre.value.trim(),
-            telefono: inputTelefono.value.trim(),
-            productos: carrito.map(p => `${p.cantidad}x ${p.nombre}`).join(", "),
-            total: totalAcumulado,
-            direccion: inputDireccion.value.trim()
-        })
-    });
+    msg += `📍 Direc: ${inputDireccion.value.trim()}\n`;
+    msg += `💰 Total a pagar: $${totalAcumulado.toLocaleString('es-AR')}\n\n`;
+    
+    msg += `🤝 MERCADO PAGO:\n`;
+    msg += `📲 TOCÁ EN "INICIAR SESIÓN"\n`;
+    msg += `👇 App: /link.mercadopago.com.ar/home\n`;
+    msg += `👉 Alias: walter30mp\n`;
+    msg += `😎 No olvides mandar el comprobante de pago\n\n`;
+    msg += `🙏 ¡Muchas gracias por tu compra!`;
 
     window.open(`https://wa.me/5491127461954?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -305,12 +288,22 @@ function cerrarMenuMobile() {
         bootstrap.Collapse.getInstance(nav).hide();
     }
 }
-
 function obtenerSiguientePedido() {
-    let ultimoNum = localStorage.getItem('contadorPedido') || 0;
-    let siguienteNum = parseInt(ultimoNum) + 1;
-    localStorage.setItem('contadorPedido', siguienteNum);
-    return siguienteNum.toString().padStart(5, '0');
+    let cuentaTotal = parseInt(localStorage.getItem('contadorAbsoluto')) || 1;
+    
+    // Calculamos los dos bloques
+    // El primer bloque sube cada 10,000 pedidos
+    let bloquePrefijo = Math.floor(cuentaTotal / 10000);
+    let bloqueSecuencia = cuentaTotal % 10000;
+
+    // Formateamos a strings con ceros a la izquierda
+    let prefijoStr = bloquePrefijo.toString().padStart(3, '0');
+    let secuenciaStr = bloqueSecuencia.toString().padStart(4, '0');
+
+    // Guardamos para la próxima vez
+    localStorage.setItem('contadorAbsoluto', cuentaTotal + 1);
+
+    return `${prefijoStr}-${secuenciaStr}`;
 }
 
 function mostrarToast(mensaje) {
@@ -455,9 +448,8 @@ function agregarDesdeDetalle(prod, cant) {
     if (existe) { existe.cantidad += cant; } 
     else { carrito.push({ ...prod, talle: prod.talleElegido, cantidad: cant }); }
     actualizarCarrito();
-    mostrarToast("Añadido al pedido 🍔");
+   
 }
-
 document.getElementById("btn-agregar-detalle").onclick = () => {
     const cant = parseInt(document.getElementById("cant-detalle").value);
     agregarDesdeDetalle(productoSeleccionado, cant);

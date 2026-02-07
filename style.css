@@ -279,3 +279,14 @@ button {
 #listaModal {
     overflow-x: hidden !important; /* Evita que aparezca la barra gris de abajo */
 }
+/* Solo para pantallas menores a 768px (móviles) */
+@media (max-width: 767.98px) {
+    #productos .producto {
+        padding-left: 4px;  /* Reduce espacio lateral */
+        padding-right: 4px; /* Reduce espacio lateral */
+    }
+
+    .producto-card {
+        margin-bottom: 0.1rem !important; /* Reduce espacio hacia abajo */
+    }
+}

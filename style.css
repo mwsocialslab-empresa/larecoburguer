@@ -15,6 +15,22 @@ body {
 body.menu-open {
     overflow: hidden;
 }
+/* 1. Eliminamos el desborde horizontal en el cuerpo del modal */
+.modal-body {
+    overflow-x: hidden !important;
+}
+
+/* 2. Ajustamos el contenedor de la lista para que no genere scroll */
+#listaModal {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* 3. Si el scroll persiste, puede ser por los márgenes de las filas */
+#listaModal .row {
+    margin-right: 0;
+    margin-left: 0;
+}
 
 /* =========================================
    2. HEADER Y NAV
@@ -87,6 +103,7 @@ body.menu-open {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
     transform: translateY(-2px);
 }
+
 
 .info-container {
     flex: 1;
@@ -247,4 +264,18 @@ body.menu-open {
 }
 button {
     touch-action: manipulation;
+}
+.card-img-top {
+    width: 100%;
+    height: 200px; /* O el tamaño que prefieras */
+    object-fit: cover; /* Esto las recorta automáticamente al mismo tamaño */
+}
+/* Elimina el desborde en el carrito */
+#listaModal .row {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+#listaModal {
+    overflow-x: hidden !important; /* Evita que aparezca la barra gris de abajo */
 }

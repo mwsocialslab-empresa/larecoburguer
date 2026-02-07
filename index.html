@@ -17,9 +17,9 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-2">
     <div class="container">
-        <a class="navbar-brand fw-bold d-flex align-items-center" href="javascript:void(0)" onclick="irAlHero()">
-           <img src="img/logo.png" alt="Logo" width="60" height="60" class="rounded-circle me-2">
-            <span class="marca fs-4">LA RECO BURGER</span>
+       <a class="navbar-brand d-flex align-items-center" href="#" onclick="volverAlCatalogo(); return false;">
+            <img src="img/logo.png" alt="La Reco Logo" class="me-2" style="width: 40px;">
+            <span class="fw-bold text-dark">LA RECO BURGER</span>
         </a>
 
         <div class="d-flex order-lg-last ms-2">
@@ -101,11 +101,10 @@
                 <h2 id="detalle-nombre" class="fw-bold mb-2"></h2>
                 <div id="detalle-precio" class="display-6 fw-bold text-success mb-4"></div>
                 
-                <div class="mb-4">
-                    <label for="detalle-talle" class="d-block fw-bold text-uppercase small mb-2 text-muted">Opciones / Cocción</label>
-                    <div id="detalle-talle" class="d-flex flex-wrap gap-2"></div>
+                
+                 <div class="pt-4 mt-4 border-top mb-4"> <h5 class="fw-bold text-uppercase small mb-3">Descripción</h5>
+                    <p id="detalle-descripcion" class="text-muted"></p>
                 </div>
-
                 <div class="mb-4">
                     <label class="d-block fw-bold text-uppercase small mb-2 text-muted">Cantidad</label>
                     <div class="input-group input-group-lg w-50 shadow-sm rounded"> 
@@ -119,10 +118,7 @@
                     AÑADIR AL PEDIDO <i class="bi bi-cart4"></i>
                 </button>
 
-                <div class="pt-4 mt-4 border-top">
-                    <h5 class="fw-bold text-uppercase small mb-3">Descripción</h5>
-                    <p id="detalle-descripcion" class="text-muted"></p>
-                </div>
+               
             </div>
         </div>
     </div>
@@ -154,7 +150,11 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">WhatsApp</label>
-                            <input type="tel" id="telefonoCliente" class="form-control" placeholder="Ej: 1122334455">
+                           <input type="tel" 
+       id="telefonoCliente" 
+       class="form-control" 
+       placeholder="Ej: 1122334455"
+       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                     </div>
                     <div class="mb-4">

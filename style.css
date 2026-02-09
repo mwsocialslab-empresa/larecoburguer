@@ -290,3 +290,52 @@ button {
         margin-bottom: 0.1rem !important; /* Reduce espacio hacia abajo */
     }
 }
+.marquesina-wrapper {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+.marquesina-content {
+    display: flex;
+    white-space: nowrap;
+    /* La animación se aplica a ambos bloques */
+    animation: scroll-infinito 45s linear infinite;
+}
+
+.marquesina-content span {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #ffc107; /* El amarillo text-warning */
+    padding-right: 20px;
+}
+
+@keyframes scroll-infinito {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Pausar al pasar el mouse (opcional, por si alguien quiere leer) */
+.marquesina-wrapper:hover .marquesina-content {
+    animation-play-state: paused;
+}
+/* Centra el texto y quita el icono por defecto o acomódalo */
+#accordionHorarios .accordion-button {
+    text-align: center;
+}
+
+/* Esto quita el icono que viene por defecto a la derecha si prefieres usar el tuyo */
+/* O puedes dejarlo, ya que por defecto Bootstrap usa una flecha que gira */
+#accordionHorarios .accordion-button::after {
+    margin-left: 15px; /* Espacio entre el texto y la flecha */
+    margin-right: 0;
+}
+
+/* Si quieres que la flecha sea naranja como tu texto */
+#accordionHorarios .accordion-button::after {
+    filter: invert(78%) sepia(64%) saturate(541%) hue-rotate(354deg) brightness(101%) contrast(101%);
+}

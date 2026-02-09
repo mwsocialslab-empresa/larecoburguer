@@ -3,6 +3,60 @@
 // ==========================================
 const URL_SHEETS = "https://script.google.com/macros/s/AKfycbx3llkL4WfrDORPXElfA6uv7-WGfkkB68uMpXaeJ0mDaekVKRcKxzsCTo_LZvols_tN/exec";
 
+// --- CONFIGURACIÓN DE HORARIOS ---
+const HORARIOS_ATENCION = {
+    // 0: Domingo, 1: Lunes, ..., 6: Sábado
+    1: { inicio: "19:00", fin: "23:59" }, // Lunes
+    2: { inicio: "19:00", fin: "23:59" }, // Martes
+    3: { inicio: "19:00", fin: "23:59" }, // Miércoles
+    4: { inicio: "19:00", fin: "23:59" }, // Jueves
+    5: { inicio: "19:00", fin: "01:00" }, // Viernes (cierra tarde)
+    6: { inicio: "19:00", fin: "01:00" }, // Sábado
+    0: { inicio: "19:00", fin: "23:59" }  // Domingo
+};
+
+function estaAbierto() {
+    const ahora = new Date();
+    const diaSemana = ahora.getDay(); 
+    const horaActual = ahora.getHours() * 100 + ahora.getMinutes(); // Ejemplo: 20:30 -> 2030
+
+    const horarioHoy = HORARIOS_ATENCION[diaSemana];
+    if (!horarioHoy) return false;
+
+    const [hInicio, mInicio] = horarioHoy.inicio.split(":").map(Number);
+    const [hFin, mFin] = horarioHoy.fin.split(":").map(Number);
+
+    const inicio = hInicio * 100 + mInicio;
+    const fin = hFin * 100 + mFin;
+
+    // Manejo de horarios que pasan la medianoche (ej: 19:00 a 01:00)
+    if (fin < inicio) {
+        return horaActual >= inicio || horaActual <= fin;
+    }
+
+    return horaActual >= inicio && horaActual <= fin;
+}
+
+// Reemplaza tu función actual por esta
+function mostrarAvisoCerrado() {
+    const modalElement = document.getElementById('modalCerrado');
+    const myModal = new bootstrap.Modal(modalElement);
+    myModal.show();
+}
+
+// Y en tu evento del botón, cambialo así:
+document.getElementById("btn-agregar-detalle").onclick = () => {
+    if (!estaAbierto()) {
+        mostrarAvisoCerrado(); // <--- Aquí llamamos al nuevo diseño
+        return; 
+    }
+
+    const cant = parseInt(document.getElementById("cant-detalle").value);
+    if(productoSeleccionado) {
+        agregarDesdeDetalle(productoSeleccionado, cant);
+    }
+};
+
 let carrito = [];
 let productosGlobal = [];
 let productoSeleccionado = null;
@@ -205,6 +259,16 @@ async function enviarPedidoWhatsApp() {
     const inputDireccion = document.getElementById('direccionModal');
     const inputTelefono = document.getElementById('telefonoCliente');
 
+    if (!estaAbierto()) {
+        alert(mensajeHorarios());
+        return;
+    }
+
+    if (!estaAbierto()) {
+    mostrarToast("😴 Estamos cerrados. Volvemos a las 19:00hs");
+    return;
+    }
+
     if (!inputNombre || !inputDireccion) return;
 
     if (!inputNombre.value.trim() || !inputDireccion.value.trim()) {
@@ -326,22 +390,56 @@ function mostrarToast(mensaje) {
 }
 // --- FUNCIÓN DEL BUSCADOR 🔍 ---
 function buscarProducto() {
-    // 1. Capturamos lo que el usuario escribe en el cuadrito de búsqueda
+    // 1. Si estamos en la vista de detalle, volvemos al catálogo para ver los resultados
+    const vistaDetalle = document.getElementById("vista-detalle");
+    if (vistaDetalle && !vistaDetalle.classList.contains("d-none")) {
+        volverAlCatalogo();
+    }
+
+    // 2. Capturamos lo que el usuario escribe
     const input = document.getElementById('buscador');
     const textoBusqueda = input.value.toLowerCase();
     
-    // 2. Seleccionamos todas las tarjetas de productos que hay en la pantalla
+    // 3. Seleccionamos todas las tarjetas de productos
     const tarjetas = document.querySelectorAll('.producto');
 
     tarjetas.forEach(tarjeta => {
-        // 3. Buscamos el nombre (el <h6>) dentro de cada tarjeta
         const nombreProducto = tarjeta.querySelector('h6').innerText.toLowerCase();
         
-        // 4. Si el nombre tiene lo que escribimos, se muestra; si no, se oculta
+        // 4. Filtramos
         if (nombreProducto.includes(textoBusqueda)) {
-            tarjeta.style.display = "block";  // Muestra ✅
+            tarjeta.style.display = "block";
         } else {
-            tarjeta.style.display = "none";   // Oculta ❌
+            tarjeta.style.display = "none";
         }
     });
 }
+document.getElementById("btn-agregar-detalle").onclick = () => {
+    // Verificamos si está abierto
+    if (!estaAbierto()) {
+        // En lugar de alert(mensajeHorarios()), usamos el modal
+        const modalElement = document.getElementById('modalCerrado');
+        const myModal = new bootstrap.Modal(modalElement);
+        myModal.show();
+        return; 
+    }
+
+    const cant = parseInt(document.getElementById("cant-detalle").value);
+    if(productoSeleccionado) {
+        agregarDesdeDetalle(productoSeleccionado, cant);
+    }
+};
+// Cerrar acordeón de horarios al hacer clic fuera
+document.addEventListener('click', function (event) {
+    const acordeonHorarios = document.getElementById('flush-horarios');
+    const botonAcordeon = document.querySelector('[data-bs-target="#flush-horarios"]');
+    
+    // Verificamos si el acordeón está abierto
+    if (acordeonHorarios.classList.contains('show')) {
+        // Si el clic NO fue dentro del acordeón ni en el botón que lo abre
+        if (!acordeonHorarios.contains(event.target) && !botonAcordeon.contains(event.target)) {
+            const bootstrapCollapse = new bootstrap.Collapse(acordeonHorarios);
+            bootstrapCollapse.hide();
+        }
+    }
+});

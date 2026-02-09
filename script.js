@@ -209,7 +209,7 @@ async function enviarPedidoWhatsApp() {
     carrito.forEach(p => {
         total += (p.precio * p.cantidad);
         itemsSheets.push(`${p.cantidad}x ${p.nombre.toUpperCase()}`);
-        itemsWS += `✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}\n`;
+        itemsWS +=`✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}\n`;
     });
     const pedidoNum = obtenerSiguientePedido();
     const fecha = new Date().toLocaleString('es-AR');
@@ -217,13 +217,13 @@ async function enviarPedidoWhatsApp() {
     
     const linkApp = "link.mercadopago.com.ar/home"; 
     
-    let msg = `🛒 *PEDIDO N° ${pedidoNum}*\n📅 ${fecha}\n👤 *CLIENTE:* ${nom}\n--------------------------\n${itemsWS}--------------------------\n📍 *Dirección:* ${dir}\n💰 *Total:* $${total.toLocaleString('es-AR')}\n\n`;
-    msg += `🤝 *MERCADO PAGO:*\n`;
-    msg += `📲 *TOCÁ EN "INICIAR SESIÓN"*\n`;
-    msg += `👇 App: ${linkApp}\n`;
-    msg += `👉 Alias: *walter30mp*\n`;
-    msg += `😎 *No olvides mandar el comprobante de pago*\n\n`;
-    msg += `🙏 ¡Muchas gracias!`;
+    let msg =`🛒 *PEDIDO N° ${pedidoNum}*\n📅 ${fecha}\n👤 *CLIENTE:* ${nom}\n--------------------------\n${itemsWS}--------------------------\n📍 *Dirección:* ${dir}\n💰 *Total:* $${total.toLocaleString('es-AR')}\n\n`;
+    msg +=`🤝 *MERCADO PAGO:*\n`;
+    msg +=`📲 *TOCÁ EN "INICIAR SESIÓN"*\n`;
+    msg +=`👇 App: ${linkApp}\n`;
+    msg +=`👉 Alias: *walter30mp*\n`;
+    msg +=`😎 *No olvides mandar el comprobante de pago*\n\n`;
+    msg +=`🙏 ¡Muchas gracias!`;
 
     window.open(`https://wa.me/5491127461954?text=${encodeURIComponent(msg)}`, '_blank');
 }

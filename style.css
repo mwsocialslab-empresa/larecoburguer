@@ -294,29 +294,28 @@ button {
     display: flex;
     width: 100%;
     overflow: hidden;
+    background: #212529; /* bg-dark */
+    padding: 10px 0;
 }
 
 .marquesina-content {
     display: flex;
     white-space: nowrap;
-    /* La animación se aplica a ambos bloques */
-    animation: scroll-infinito 45s linear infinite;
+    flex-shrink: 0; /* Evita que el bloque se encoja */
+    animation: scroll-infinito 15s linear infinite;
 }
 
 .marquesina-content span {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: bold;
-    color: #ffc107; /* El amarillo text-warning */
-    padding-right: 20px;
+    color: #ffc107;
+    padding-right: 50px; /* Espacio entre frases */
+    display: inline-block;
 }
 
 @keyframes scroll-infinito {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-100%);
-    }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
 }
 
 /* Pausar al pasar el mouse (opcional, por si alguien quiere leer) */

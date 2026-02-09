@@ -221,6 +221,25 @@ function actualizarCarrito() {
         contadorNav.innerText = items;
         contadorNav.style.display = items > 0 ? "block" : "none";
     }
+    const btnFinalizar = document.querySelector('#modalCarrito .btn-success'); // Ajusta el selector si tu botón tiene otro ID
+    
+    if (btnFinalizar) {
+        if (!estaAbierto()) {
+            btnFinalizar.classList.remove('btn-success');
+            btnFinalizar.classList.add('btn-secondary');
+            btnFinalizar.innerHTML = 'LOCAL CERRADO 😴';
+            btnFinalizar.onclick = () => {
+                const modalCerrado = new bootstrap.Modal(document.getElementById('modalCerrado'));
+                modalCerrado.show();
+            };
+        } else {
+            // Si abre, restauramos el botón original
+            btnFinalizar.classList.add('btn-success');
+            btnFinalizar.classList.remove('btn-secondary');
+            btnFinalizar.innerHTML = 'FINALIZAR PEDIDO';
+            btnFinalizar.onclick = enviarPedidoWhatsApp;
+        }
+    }
 }
 
 function modificarCantidadCarrito(index, cambio) {
@@ -430,7 +449,7 @@ document.getElementById("btn-agregar-detalle").onclick = () => {
     }
 };
 // Cerrar acordeón de horarios al hacer clic fuera
-document.addEventListener('click', function (event) {
+document.addEventListener('click', function (event) {ios
     const acordeonHorarios = document.getElementById('flush-horarios');
     const botonAcordeon = document.querySelector('[data-bs-target="#flush-horarios"]');
     

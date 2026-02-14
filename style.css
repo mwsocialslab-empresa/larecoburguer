@@ -246,3 +246,19 @@ body.menu-open {
         margin-bottom: 0.1rem !important;
     }
 }
+.form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.form-check-label {
+    width: 100%;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+#contenedor-adicionales label.fw-bold {
+    color: #212529;
+    font-size: 1rem;
+    display: block;
+}

@@ -12,7 +12,14 @@ const HORARIOS_ATENCION = {
     6: { inicio: "11:00", fin: "01:00" }, // Sab
     0: { inicio: "19:00", fin: "23:59" }  // Dom
 };
-
+const OPCIONES_ADICIONALES = [
+    { nombre: "Extra carne", precio: 2000 },
+    { nombre: "Extra carne + Extra Cheddar", precio: 3000 },
+    { nombre: "Bacon", precio: 1000 },
+    { nombre: "Tomate", precio: 1000 },
+    { nombre: "Huevo", precio: 100 },
+    { nombre: "Salsa Tasty", precio: 1500 }
+];
 let carrito = [];
 let productosGlobal = [];
 let productoSeleccionado = null;
@@ -117,18 +124,19 @@ function renderizarProductos(data) {
 function verDetalle(index) {
     const p = productosGlobal[index];
     if (!p) return;
+    
+    // Guardamos el producto seleccionado
     productoSeleccionado = { ...p, indexGlobal: index };
     
+    // 1. Renderizado de información básica
     document.getElementById("detalle-img").src = p.imagen;
     document.getElementById("detalle-nombre").innerText = p.nombre.toUpperCase();
-    
-    // Mostramos el precio inicial (el de la columna B)
-    document.getElementById("detalle-precio").innerText = `$${p.precio.toLocaleString('es-AR')}`;
+    document.getElementById("detalle-descripcion").innerText = p.detalle || 'Opción de La Reco.';
     document.getElementById("cant-detalle").value = 1;
 
+    // 2. Lógica de Agregados (Simple, Doble, Triple)
     const contenedorAgregados = document.getElementById("contenedor-agregados");
     if (contenedorAgregados) {
-        // Solo para hamburguesas y si la columna Agregados tiene datos
         if (p.categoria === "hamburguesas" && p.agregados) {
             const opciones = p.agregados.split(","); 
             let htmlBotones = '<label class="fw-bold mb-2 d-block">Seleccioná el tamaño:</label><div class="d-flex gap-2 flex-wrap mb-3">';
@@ -148,26 +156,58 @@ function verDetalle(index) {
             });
             
             htmlBotones += '</div>';
-            // Inputs ocultos para guardar la selección actual
-            htmlBotones += `<input type="hidden" id="agregado-seleccionado" value="${opciones[0].split(":")[0].trim()}">`;
-            htmlBotones += `<input type="hidden" id="precio-seleccionado" value="${parseFloat(opciones[0].split(":")[1]) || p.precio}">`;
+            
+            // Seteamos valores iniciales por defecto (la primera opción)
+            const primerNombre = opciones[0].split(":")[0].trim();
+            const primerPrecio = parseFloat(opciones[0].split(":")[1]) || p.precio;
+            
+            htmlBotones += `<input type="hidden" id="agregado-seleccionado" value="${primerNombre}">`;
+            htmlBotones += `<input type="hidden" id="precio-seleccionado" value="${primerPrecio}">`;
             
             contenedorAgregados.innerHTML = htmlBotones;
             contenedorAgregados.classList.remove("d-none");
-            
-            // Actualizamos el precio visual inicial al de la primera opción (Simple)
-            const primerPrecio = parseFloat(opciones[0].split(":")[1]) || p.precio;
-            document.getElementById("detalle-precio").innerText = `$${primerPrecio.toLocaleString('es-AR')}`;
         } else {
+            // Si no es hamburguesa, limpiamos y ocultamos
             contenedorAgregados.innerHTML = "";
             contenedorAgregados.classList.add("d-none");
+            // Seteamos el precio base en el input oculto por si acaso
+            const inputPrecio = document.getElementById("precio-seleccionado");
+            if(inputPrecio) inputPrecio.value = p.precio;
         }
     }
 
+    // 3. Lógica de Adicionales (Extra Carne, Bacon, etc.)
+    const contAdicionales = document.getElementById("contenedor-adicionales");
+    const listaAdicionales = document.getElementById("lista-adicionales");
+
+    if (p.categoria === "hamburguesas") {
+        let htmlAdics = "";
+        OPCIONES_ADICIONALES.forEach((adic, i) => {
+            htmlAdics += `
+                <div class="form-check">
+                    <input class="form-check-input check-adicional" type="checkbox" 
+                        value="${adic.precio}" id="adic-${i}" data-nombre="${adic.nombre}"
+                        onchange="recalcularPrecioDinamico()">
+                    <label class="form-check-label d-flex justify-content-between" for="adic-${i}">
+                        <span>${adic.nombre}</span>
+                        <span class="text-success fw-bold">+$${adic.precio.toLocaleString('es-AR')}</span>
+                    </label>
+                </div>`;
+        });
+        listaAdicionales.innerHTML = htmlAdics;
+        contAdicionales.classList.remove("d-none");
+    } else {
+        if (contAdicionales) contAdicionales.classList.add("d-none");
+    }
+
+    // 4. Mostrar vista y hacer scroll
     document.getElementById("hero").classList.add("d-none");
     document.getElementById("contenedor-catalogo").classList.add("d-none");
     document.getElementById("vista-detalle").classList.remove("d-none");
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 5. Cálculo final de precio (para que muestre el valor correcto de entrada)
+    recalcularPrecioDinamico();
 }
 // Función auxiliar para el cambio de color de los botones
 function seleccionarOpcion(elemento, nombre, precio) {
@@ -176,48 +216,73 @@ function seleccionarOpcion(elemento, nombre, precio) {
     botones.forEach(btn => btn.classList.remove('btn-selector-active'));
     elemento.classList.add('btn-selector-active');
     
-    // Guardar valores seleccionados
+    // Guardar valores seleccionados en los inputs ocultos
     document.getElementById("agregado-seleccionado").value = nombre;
     document.getElementById("precio-seleccionado").value = precio;
     
-    // Actualizar precio en pantalla
-    document.getElementById("detalle-precio").innerText = `$${precio.toLocaleString('es-AR')}`;
+    // IMPORTANTE: Llamamos al recalculo para que sume los adicionales que ya estén marcados
+    recalcularPrecioDinamico();
 }
+function recalcularPrecioDinamico() {
+    // 1. Obtener el precio base según el botón (Simple/Doble/Triple) que esté activo
+    // Si no hay botón, usamos el precio original del producto
+    const precioBase = parseFloat(document.getElementById("precio-seleccionado")?.value) || productoSeleccionado.precio;
+    
+    // 2. Sumar todos los adicionales que tengan el check marcado
+    let totalAdicionales = 0;
+    document.querySelectorAll('.check-adicional:checked').forEach(check => {
+        totalAdicionales += parseFloat(check.value);
+    });
 
+    // 3. Mostrar la suma total en el detalle
+    const precioFinal = precioBase + totalAdicionales;
+    document.getElementById("detalle-precio").innerText = `$${precioFinal.toLocaleString('es-AR')}`;
+}
 /* ==========================================
    🔹 CARRITO Y COMPRA
    ========================================= */
 function agregarDesdeDetalle(prod, cant) {
     const agregadoNombre = document.getElementById("agregado-seleccionado")?.value || "";
-    const precioFinal = parseFloat(document.getElementById("precio-seleccionado")?.value) || prod.precio;
+    const precioBaseElegido = parseFloat(document.getElementById("precio-seleccionado")?.value) || prod.precio;
     
-    // Creamos el nombre compuesto para que en el ticket diga "Tasty (Doble)"
-    const nombreFinal = (prod.categoria === "hamburguesas" && agregadoNombre) 
+    // Capturar adicionales marcados
+    let adicionalesElegidos = [];
+    let montoAdicionales = 0;
+    
+    document.querySelectorAll('.check-adicional:checked').forEach(check => {
+        adicionalesElegidos.push(check.getAttribute('data-nombre'));
+        montoAdicionales += parseFloat(check.value);
+    });
+
+    const precioUnitarioFinal = precioBaseElegido + montoAdicionales;
+    
+    // Nombre que aparecerá en el carrito y WhatsApp
+    let nombreFinal = (prod.categoria === "hamburguesas" && agregadoNombre) 
         ? `${prod.nombre} (${agregadoNombre})` 
         : prod.nombre;
+    
+    if (adicionalesElegidos.length > 0) {
+        nombreFinal += ` + [${adicionalesElegidos.join(", ")}]`;
+    }
 
-    // Buscamos si ya existe esta variante exacta en el carrito
-    const existe = carrito.find(p => p.nombre === nombreFinal);
+    // Identificador único (para que si agrega una burger con bacon y otra sin, sean items distintos)
+    const idUnico = nombreFinal;
+
+    const existe = carrito.find(p => p.idUnico === idUnico);
     if (existe) {
         existe.cantidad += cant;
     } else {
         carrito.push({ 
             ...prod, 
+            idUnico: idUnico,
             nombre: nombreFinal, 
-            precio: precioFinal, 
+            precio: precioUnitarioFinal, 
             cantidad: cant 
         });
     }
     
     actualizarCarrito();
-    
-    // Tu lógica original de feedback del botón
-    const btn = document.getElementById("btn-agregar-detalle");
-    btn.disabled = true;
-    setTimeout(() => {
-        btn.innerHTML = 'AÑADIR AL PEDIDO <i class="bi bi-cart4"></i>';
-        btn.disabled = false;
-    }, 1500);
+    // ... resto de tu feedback de botón
 }
 
 function actualizarCarrito() {

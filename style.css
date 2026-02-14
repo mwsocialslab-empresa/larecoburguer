@@ -291,3 +291,31 @@ body.menu-open {
 .text-success {
     color: #28a745 !important;
 }
+/* Estilo para que el nombre y precio queden fijos */
+.header-pedido-sticky {
+    position: -webkit-sticky; /* Soporte para Safari */
+    position: sticky;
+    top: 70px; /* IMPORTANTE: Esto lo baja para que no quede DETRÁS del navbar */
+    background: white;
+    z-index: 1020; /* Por debajo del navbar pero arriba de todo lo demás */
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f8f9fa; /* Línea sutil para separar al scrollear */
+}
+
+/* En móviles, si el navbar es más chico o más grande, ajustamos */
+@media (max-width: 768px) {
+    .header-pedido-sticky {
+        top: 60px; /* Ajuste para móviles */
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+/* Evitar que el contenedor padre bloquee el sticky */
+.col-12.col-md-6 {
+    overflow: visible !important;
+}

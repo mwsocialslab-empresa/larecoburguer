@@ -1,7 +1,7 @@
 /* ==========================================
    🔹 CONFIGURACIÓN GLOBAL Y ESTADO
    ========================================== */
-const URL_SHEETS = "https://script.google.com/macros/s/AKfycbx3llkL4WfrDORPXElfA6uv7-WGfkkB68uMpXaeJ0mDaekVKRcKxzsCTo_LZvols_tN/exec";
+const URL_SHEETS = "https://script.google.com/macros/s/AKfycbw3MZVpUNjI-lCIO7uDTjk33xZ1bdUYXqSXQGHPNm3HTUYdlladMDKjK5FCXAtWzMsp/exec";
 
 const HORARIOS_ATENCION = {
     1: { inicio: "19:00", fin: "23:59" }, // Lun
@@ -9,7 +9,7 @@ const HORARIOS_ATENCION = {
     3: { inicio: "11:00", fin: "23:59" }, // Mie
     4: { inicio: "19:00", fin: "23:59" }, // Jue
     5: { inicio: "19:00", fin: "01:00" }, // Vie
-    6: { inicio: "19:00", fin: "01:00" }, // Sab
+    6: { inicio: "11:00", fin: "01:00" }, // Sab
     0: { inicio: "19:00", fin: "23:59" }  // Dom
 };
 
@@ -118,26 +118,100 @@ function verDetalle(index) {
     const p = productosGlobal[index];
     if (!p) return;
     productoSeleccionado = { ...p, indexGlobal: index };
+    
     document.getElementById("detalle-img").src = p.imagen;
     document.getElementById("detalle-nombre").innerText = p.nombre.toUpperCase();
+    
+    // Mostramos el precio inicial (el de la columna B)
     document.getElementById("detalle-precio").innerText = `$${p.precio.toLocaleString('es-AR')}`;
     document.getElementById("cant-detalle").value = 1;
-    const desc = document.getElementById("detalle-descripcion");
-    if (desc) desc.innerText = p.detalle || 'Opción de La Reco.';
+
+    const contenedorAgregados = document.getElementById("contenedor-agregados");
+    if (contenedorAgregados) {
+        // Solo para hamburguesas y si la columna Agregados tiene datos
+        if (p.categoria === "hamburguesas" && p.agregados) {
+            const opciones = p.agregados.split(","); 
+            let htmlBotones = '<label class="fw-bold mb-2 d-block">Seleccioná el tamaño:</label><div class="d-flex gap-2 flex-wrap mb-3">';
+            
+            opciones.forEach((opt, i) => {
+                const parts = opt.split(":");
+                const nombreOpt = parts[0].trim();
+                const precioOpt = parseFloat(parts[1]) || p.precio;
+                const activeClass = i === 0 ? 'btn-selector-active' : '';
+                
+                htmlBotones += `
+                    <button type="button" 
+                        class="btn btn-outline-dark btn-selector ${activeClass}" 
+                        onclick="seleccionarOpcion(this, '${nombreOpt}', ${precioOpt})">
+                        ${nombreOpt}
+                    </button>`;
+            });
+            
+            htmlBotones += '</div>';
+            // Inputs ocultos para guardar la selección actual
+            htmlBotones += `<input type="hidden" id="agregado-seleccionado" value="${opciones[0].split(":")[0].trim()}">`;
+            htmlBotones += `<input type="hidden" id="precio-seleccionado" value="${parseFloat(opciones[0].split(":")[1]) || p.precio}">`;
+            
+            contenedorAgregados.innerHTML = htmlBotones;
+            contenedorAgregados.classList.remove("d-none");
+            
+            // Actualizamos el precio visual inicial al de la primera opción (Simple)
+            const primerPrecio = parseFloat(opciones[0].split(":")[1]) || p.precio;
+            document.getElementById("detalle-precio").innerText = `$${primerPrecio.toLocaleString('es-AR')}`;
+        } else {
+            contenedorAgregados.innerHTML = "";
+            contenedorAgregados.classList.add("d-none");
+        }
+    }
+
     document.getElementById("hero").classList.add("d-none");
     document.getElementById("contenedor-catalogo").classList.add("d-none");
     document.getElementById("vista-detalle").classList.remove("d-none");
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+// Función auxiliar para el cambio de color de los botones
+function seleccionarOpcion(elemento, nombre, precio) {
+    // Manejo visual de los botones
+    const botones = elemento.parentElement.querySelectorAll('.btn-selector');
+    botones.forEach(btn => btn.classList.remove('btn-selector-active'));
+    elemento.classList.add('btn-selector-active');
+    
+    // Guardar valores seleccionados
+    document.getElementById("agregado-seleccionado").value = nombre;
+    document.getElementById("precio-seleccionado").value = precio;
+    
+    // Actualizar precio en pantalla
+    document.getElementById("detalle-precio").innerText = `$${precio.toLocaleString('es-AR')}`;
 }
 
 /* ==========================================
    🔹 CARRITO Y COMPRA
    ========================================= */
 function agregarDesdeDetalle(prod, cant) {
-    const existe = carrito.find(p => p.nombre === prod.nombre);
-    if (existe) existe.cantidad += cant;
-    else carrito.push({ ...prod, cantidad: cant });
+    const agregadoNombre = document.getElementById("agregado-seleccionado")?.value || "";
+    const precioFinal = parseFloat(document.getElementById("precio-seleccionado")?.value) || prod.precio;
+    
+    // Creamos el nombre compuesto para que en el ticket diga "Tasty (Doble)"
+    const nombreFinal = (prod.categoria === "hamburguesas" && agregadoNombre) 
+        ? `${prod.nombre} (${agregadoNombre})` 
+        : prod.nombre;
+
+    // Buscamos si ya existe esta variante exacta en el carrito
+    const existe = carrito.find(p => p.nombre === nombreFinal);
+    if (existe) {
+        existe.cantidad += cant;
+    } else {
+        carrito.push({ 
+            ...prod, 
+            nombre: nombreFinal, 
+            precio: precioFinal, 
+            cantidad: cant 
+        });
+    }
+    
     actualizarCarrito();
+    
+    // Tu lógica original de feedback del botón
     const btn = document.getElementById("btn-agregar-detalle");
     btn.disabled = true;
     setTimeout(() => {

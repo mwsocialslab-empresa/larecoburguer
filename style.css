@@ -298,7 +298,7 @@ body.menu-open {
     top: 70px; /* IMPORTANTE: Esto lo baja para que no quede DETRÁS del navbar */
     background: white;
     z-index: 1020; /* Por debajo del navbar pero arriba de todo lo demás */
-    padding-top: 10px;
+    padding-top: 30px;
     padding-bottom: 10px;
     margin-bottom: 20px;
     border-bottom: 2px solid #f8f9fa; /* Línea sutil para separar al scrollear */

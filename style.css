@@ -158,7 +158,6 @@ body.menu-open {
     cursor: pointer;
 }
 
-/* COLOR AMARILLO LA RECO CUANDO ESTÁ SELECCIONADO */
 .btn-selector-active {
     background-color: #ffc107 !important; 
     color: #212529 !important;
@@ -172,7 +171,7 @@ body.menu-open {
 }
 
 /* =========================================
-   6. VISTA DETALLE Y OTROS
+   6. VISTA DETALLE Y ADICIONALES
    ========================================= */
 .contenedor-zoom {
     width: 100%;
@@ -186,6 +185,86 @@ body.menu-open {
     object-fit: cover;
 }
 
+/* Comportamiento NORMAL en Escritorio (PC) */
+.header-pedido-sticky {
+    position: relative;
+    background: transparent;
+    z-index: 10;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+/* Comportamiento STICKY SOLO en Móviles */
+@media (max-width: 767.98px) {
+    .header-pedido-sticky {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 60px; /* Ajustado para que no quede detrás del Navbar móvil */
+        background: white;
+        z-index: 1020;
+        padding-top: 20px;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f8f9fa;
+        /* Hacemos que ocupe todo el ancho del cuadro blanco */
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+.form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.form-check-label {
+    width: 100%;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+#contenedor-adicionales label.fw-bold {
+    color: #212529;
+    font-size: 1rem;
+    display: block;
+}
+
+/* =========================================
+   7. CARRITO Y ETIQUETAS
+   ========================================= */
+.badge-reco-yellow {
+    display: inline-block;
+    background-color: #ffc107;
+    color: #212529;
+    padding: 3px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: 1px solid #333;
+    margin-top: 4px;
+}
+
+.badge-reco-yellow-sm {
+    display: inline-block;
+    background-color: #ffc107;
+    color: #212529;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid #333;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+/* =========================================
+   8. COMPONENTES EXTRA
+   ========================================= */
 .custom-toast {
     position: fixed;
     bottom: 40px;
@@ -237,85 +316,6 @@ body.menu-open {
     100% { transform: translateX(-100%); }
 }
 
-@media (max-width: 767.98px) {
-    #productos .producto {
-        padding-left: 4px;
-        padding-right: 4px;
-    }
-    .producto-card {
-        margin-bottom: 0.1rem !important;
-    }
-}
-.form-check-input:checked {
-    background-color: #ffc107;
-    border-color: #ffc107;
-}
-
-.form-check-label {
-    width: 100%;
-    font-size: 0.95rem;
-    cursor: pointer;
-}
-
-#contenedor-adicionales label.fw-bold {
-    color: #212529;
-    font-size: 1rem;
-    display: block;
-}
-/* Etiqueta para Tamaño (Simple, Doble, Triple) */
-.badge-reco-yellow {
-    display: inline-block;
-    background-color: #ffc107; /* Amarillo de tus botones */
-    color: #212529;
-    padding: 3px 12px;
-    border-radius: 15px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    border: 1px solid #333;
-    margin-top: 4px;
-}
-
-/* Etiqueta pequeña para Adicionales */
-.badge-reco-yellow-sm {
-    display: inline-block;
-    background-color: #ffc107;
-    color: #212529;
-    padding: 1px 8px;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    border: 1px solid #333;
-}
-
-/* Ajuste del precio en el carrito */
-.text-success {
-    color: #28a745 !important;
-}
-/* Estilo para que el nombre y precio queden fijos */
-.header-pedido-sticky {
-    position: -webkit-sticky; /* Soporte para Safari */
-    position: sticky;
-    top: 70px; /* IMPORTANTE: Esto lo baja para que no quede DETRÁS del navbar */
-    background: white;
-    z-index: 1020; /* Por debajo del navbar pero arriba de todo lo demás */
-    padding-top: 30px;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #f8f9fa; /* Línea sutil para separar al scrollear */
-}
-
-/* En móviles, si el navbar es más chico o más grande, ajustamos */
-@media (max-width: 768px) {
-    .header-pedido-sticky {
-        top: 60px; /* Ajuste para móviles */
-        margin-left: -1.5rem;
-        margin-right: -1.5rem;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-    }
-}
-
-/* Evitar que el contenedor padre bloquee el sticky */
 .col-12.col-md-6 {
     overflow: visible !important;
 }

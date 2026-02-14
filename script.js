@@ -290,14 +290,50 @@ function actualizarCarrito() {
     const totalModal = document.getElementById("totalModal");
     const contadorNav = document.getElementById("contadorNav");
     let html = "", total = 0, items = 0;
+
     carrito.forEach((p, i) => {
         const sub = p.precio * p.cantidad;
-        total += sub; items += p.cantidad;
+        total += sub; 
+        items += p.cantidad;
+
+        // --- LÓGICA DE CORRECCIÓN: Separar Nombre, Tamaño y Adicionales ---
+        const regexTamaño = /\((.*?)\)/;
+        const regexAdicionales = /\[(.*?)\]/;
+        
+        const tamañoMatch = p.nombre.match(regexTamaño);
+        const adicionalesMatch = p.nombre.match(regexAdicionales);
+        
+        const nombreLimpio = p.nombre.split('(')[0].split('+')[0].trim();
+        const tamaño = tamañoMatch ? tamañoMatch[1] : "";
+        const listaAdics = adicionalesMatch ? adicionalesMatch[1].split(', ') : [];
+        // -----------------------------------------------------------------
+
         html += `
             <div class="mb-4 border-bottom pb-3">
                 <div class="row gx-2 align-items-center">
-                    <div class="col-3"><img src="${p.imagen}" class="img-fluid rounded shadow-sm" style="height:60px; object-fit:cover;"></div>
-                    <div class="col-9"><h6 class="mb-0 fw-bold text-uppercase" style="font-size:0.85rem;">${p.nombre}</h6></div>
+                    <div class="col-3">
+                        <img src="${p.imagen}" class="img-fluid rounded shadow-sm" style="height:60px; object-fit:cover;">
+                    </div>
+                    <div class="col-9">
+                        <h6 class="mb-0 fw-bold text-uppercase" style="font-size:0.85rem;">${nombreLimpio}</h6>
+                        
+                        ${tamaño ? `<span class="badge-reco-yellow">${tamaño.toUpperCase()}</span>` : ''}
+                        
+                        ${listaAdics.length > 0 ? `
+                            <div class="mt-2">
+                                <small class="text-muted d-block fw-bold" style="font-size:0.65rem;">ADICIONALES:</small>
+                                ${listaAdics.map(adic => {
+                                    const info = OPCIONES_ADICIONALES.find(a => a.nombre === adic.trim());
+                                    const precioAdic = info ? info.precio : 0;
+                                    return `
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="badge-reco-yellow-sm">${adic.toUpperCase()}</span>
+                                            <small class="fw-bold text-success" style="font-size:0.7rem;">+$${precioAdic.toLocaleString('es-AR')}</small>
+                                        </div>`;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
                 <div class="row gx-2 align-items-center mt-2">
                     <div class="col-5">
@@ -310,16 +346,20 @@ function actualizarCarrito() {
                     <div class="col-3 text-center">
                         <button class="btn btn-sm text-danger fw-bold p-0" style="font-size:0.65rem;" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
                     </div>
-                    <div class="col-4 text-end"><span class="fw-bold">$${sub.toLocaleString('es-AR')}</span></div>
+                    <div class="col-4 text-end">
+                        <span class="fw-bold">$${sub.toLocaleString('es-AR')}</span>
+                    </div>
                 </div>
             </div>`;
     });
+
     if (listaModal) listaModal.innerHTML = carrito.length === 0 ? "<p class='text-center py-4'>Tu carrito está vacío 🍔</p>" : html;
     if (totalModal) totalModal.innerText = total.toLocaleString('es-AR');
     if (contadorNav) {
         contadorNav.innerText = items;
         contadorNav.style.display = items > 0 ? "block" : "none";
     }
+
     const btnFinalizar = document.querySelector('#modalCarrito .btn-success');
     if (btnFinalizar) {
         if (!estaAbierto()) {

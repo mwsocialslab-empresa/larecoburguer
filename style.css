@@ -262,3 +262,32 @@ body.menu-open {
     font-size: 1rem;
     display: block;
 }
+/* Etiqueta para Tamaño (Simple, Doble, Triple) */
+.badge-reco-yellow {
+    display: inline-block;
+    background-color: #ffc107; /* Amarillo de tus botones */
+    color: #212529;
+    padding: 3px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: 1px solid #333;
+    margin-top: 4px;
+}
+
+/* Etiqueta pequeña para Adicionales */
+.badge-reco-yellow-sm {
+    display: inline-block;
+    background-color: #ffc107;
+    color: #212529;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid #333;
+}
+
+/* Ajuste del precio en el carrito */
+.text-success {
+    color: #28a745 !important;
+}

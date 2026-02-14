@@ -152,14 +152,19 @@
         </div>
         <div class="col-12 col-md-6 mb-4">
             <div class="p-4 bg-white rounded-4 shadow-sm border">
-                <h2 id="detalle-nombre" class="fw-bold mb-2"></h2>
-                <div id="detalle-precio" class="display-6 fw-bold text-success mb-4"></div>
                 
+                <div style="position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee;">
+                    <h2 id="detalle-nombre" class="fw-bold mb-2"></h2>
+                    <div id="detalle-precio" class="display-6 fw-bold text-success"></div>
+                </div>
                 
-                 <div class="pt-4 mt-4 border-top mb-4"> <h5 class="fw-bold text-uppercase small mb-3">Descripción</h5>
+                <div class="pt-2"> 
+                    <h5 class="fw-bold text-uppercase small mb-3 text-muted">Descripción</h5>
                     <p id="detalle-descripcion" class="text-muted"></p>
                 </div>
+
                 <div id="contenedor-agregados" class="mb-3 d-none"></div>
+                
                 <div class="mb-4">
                     <label class="d-block fw-bold text-uppercase small mb-2 text-muted">Cantidad</label>
                     <div class="input-group input-group-lg w-50 shadow-sm rounded"> 
@@ -168,16 +173,15 @@
                         <button class="btn btn-outline-dark" onclick="cambiarCantidadDetalle(1)">+</button>
                     </div>
                 </div>
+
                 <div id="contenedor-adicionales" class="mt-4 border-top pt-3 d-none">
                     <label class="fw-bold mb-2">Adicionales:</label>
-                    <div id="lista-adicionales" class="d-flex flex-column gap-2">
-                        </div>
+                    <div id="lista-adicionales" class="d-flex flex-column gap-2"></div>
                 </div>
+
                 <button id="btn-agregar-detalle" class="btn btn-dark w-100 py-3 fw-bold rounded-pill shadow d-flex align-items-center justify-content-center gap-2">
                     AÑADIR AL PEDIDO <i class="bi bi-cart4"></i>
                 </button>
-
-               
             </div>
         </div>
     </div>

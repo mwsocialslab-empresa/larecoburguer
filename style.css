@@ -323,15 +323,15 @@ body.menu-open {
 /* Animación de vibración para el carrito */
 @keyframes shake-cart {
     0% { transform: scale(1) rotate(0deg); }
-    20% { transform: scale(1.4) rotate(-15deg); }
-    40% { transform: scale(1.4) rotate(15deg); }
-    60% { transform: scale(1.4) rotate(-15deg); }
-    80% { transform: scale(1.4) rotate(15deg); }
+    20% { transform: scale(1.1) rotate(-15deg); }
+    40% { transform: scale(1.1) rotate(15deg); }
+    60% { transform: scale(1.1) rotate(-15deg); }
+    80% { transform: scale(1.1) rotate(15deg); }
     100% { transform: scale(1) rotate(0deg); }
 }
 
 /* Esta clase se aplicará al contenedor del camioncito */
 .cart-vibrate {
-    animation: shake-cart 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    animation: shake-cart 0.6s cubic-bezier(.36,.07,.19,.97) both;
     color: #ffc107 !important; /* Cambia a amarillo durante el sacudón */
 }

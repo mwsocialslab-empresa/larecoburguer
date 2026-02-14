@@ -12,6 +12,7 @@ const HORARIOS_ATENCION = {
     6: { inicio: "11:00", fin: "01:00" }, // Sab
     0: { inicio: "19:00", fin: "23:59" }  // Dom
 };
+
 const OPCIONES_ADICIONALES = [
     { nombre: "Extra carne", precio: 2000 },
     { nombre: "Extra carne + Extra Cheddar", precio: 3000 },
@@ -20,6 +21,7 @@ const OPCIONES_ADICIONALES = [
     { nombre: "Huevo", precio: 100 },
     { nombre: "Salsa Tasty", precio: 1500 }
 ];
+
 let carrito = [];
 let productosGlobal = [];
 let productoSeleccionado = null;
@@ -34,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function configurarEventosBotones() {
-    // Botón de agregar al carrito (Detalle)
     const btnAgregar = document.getElementById("btn-agregar-detalle");
     if (btnAgregar) {
         btnAgregar.onclick = () => {
@@ -43,7 +44,7 @@ function configurarEventosBotones() {
             if (productoSeleccionado) agregarDesdeDetalle(productoSeleccionado, cant);
         };
     }
-    // Cerrar acordeón de horarios al hacer clic fuera
+    
     document.addEventListener('click', (e) => {
         const acordeon = document.getElementById('flush-horarios');
         const boton = document.querySelector('[data-bs-target="#flush-horarios"]');
@@ -125,16 +126,13 @@ function verDetalle(index) {
     const p = productosGlobal[index];
     if (!p) return;
     
-    // Guardamos el producto seleccionado
     productoSeleccionado = { ...p, indexGlobal: index };
     
-    // 1. Renderizado de información básica
     document.getElementById("detalle-img").src = p.imagen;
     document.getElementById("detalle-nombre").innerText = p.nombre.toUpperCase();
     document.getElementById("detalle-descripcion").innerText = p.detalle || 'Opción de La Reco.';
     document.getElementById("cant-detalle").value = 1;
 
-    // 2. Lógica de Agregados (Simple, Doble, Triple)
     const contenedorAgregados = document.getElementById("contenedor-agregados");
     if (contenedorAgregados) {
         if (p.categoria === "hamburguesas" && p.agregados) {
@@ -157,7 +155,6 @@ function verDetalle(index) {
             
             htmlBotones += '</div>';
             
-            // Seteamos valores iniciales por defecto (la primera opción)
             const primerNombre = opciones[0].split(":")[0].trim();
             const primerPrecio = parseFloat(opciones[0].split(":")[1]) || p.precio;
             
@@ -167,16 +164,13 @@ function verDetalle(index) {
             contenedorAgregados.innerHTML = htmlBotones;
             contenedorAgregados.classList.remove("d-none");
         } else {
-            // Si no es hamburguesa, limpiamos y ocultamos
             contenedorAgregados.innerHTML = "";
             contenedorAgregados.classList.add("d-none");
-            // Seteamos el precio base en el input oculto por si acaso
             const inputPrecio = document.getElementById("precio-seleccionado");
             if(inputPrecio) inputPrecio.value = p.precio;
         }
     }
 
-    // 3. Lógica de Adicionales (Extra Carne, Bacon, etc.)
     const contAdicionales = document.getElementById("contenedor-adicionales");
     const listaAdicionales = document.getElementById("lista-adicionales");
 
@@ -200,52 +194,76 @@ function verDetalle(index) {
         if (contAdicionales) contAdicionales.classList.add("d-none");
     }
 
-    // 4. Mostrar vista y hacer scroll
     document.getElementById("hero").classList.add("d-none");
     document.getElementById("contenedor-catalogo").classList.add("d-none");
     document.getElementById("vista-detalle").classList.remove("d-none");
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // 5. Cálculo final de precio (para que muestre el valor correcto de entrada)
     recalcularPrecioDinamico();
 }
-// Función auxiliar para el cambio de color de los botones
+
 function seleccionarOpcion(elemento, nombre, precio) {
-    // Manejo visual de los botones
     const botones = elemento.parentElement.querySelectorAll('.btn-selector');
     botones.forEach(btn => btn.classList.remove('btn-selector-active'));
     elemento.classList.add('btn-selector-active');
     
-    // Guardar valores seleccionados en los inputs ocultos
     document.getElementById("agregado-seleccionado").value = nombre;
     document.getElementById("precio-seleccionado").value = precio;
     
-    // IMPORTANTE: Llamamos al recalculo para que sume los adicionales que ya estén marcados
     recalcularPrecioDinamico();
 }
+
 function recalcularPrecioDinamico() {
-    // 1. Obtener el precio base según el botón (Simple/Doble/Triple) que esté activo
-    // Si no hay botón, usamos el precio original del producto
-    const precioBase = parseFloat(document.getElementById("precio-seleccionado")?.value) || productoSeleccionado.precio;
+    const inputPrecio = document.getElementById("precio-seleccionado");
+    const precioBase = inputPrecio ? parseFloat(inputPrecio.value) : (productoSeleccionado ? productoSeleccionado.precio : 0);
     
-    // 2. Sumar todos los adicionales que tengan el check marcado
     let totalAdicionales = 0;
     document.querySelectorAll('.check-adicional:checked').forEach(check => {
         totalAdicionales += parseFloat(check.value);
     });
 
-    // 3. Mostrar la suma total en el detalle
     const precioFinal = precioBase + totalAdicionales;
-    document.getElementById("detalle-precio").innerText = `$${precioFinal.toLocaleString('es-AR')}`;
+    const detallePrecioElem = document.getElementById("detalle-precio");
+    if (detallePrecioElem) {
+        detallePrecioElem.innerText = `$${precioFinal.toLocaleString('es-AR')}`;
+    }
 }
+
 /* ==========================================
    🔹 CARRITO Y COMPRA
    ========================================= */
+
+function animarCarrito() {
+    // Buscamos el icono del camión (que es tu carrito según la captura)
+    const cartContainer = document.querySelector('.bi-truck')?.parentElement || document.querySelector('[onclick="intentarAbrirCarrito()"]');
+    
+    if (cartContainer) {
+        // 1. Quitamos la clase por si ya existía de un clic anterior
+        cartContainer.classList.remove("cart-vibrate");
+        
+        // 2. TRUCO CRÍTICO: Forzamos un 'reflow' para que el navegador reinicie la animación
+        void cartContainer.offsetWidth; 
+        
+        // 3. Agregamos la clase que dispara la vibración
+        cartContainer.classList.add("cart-vibrate");
+        
+        // 4. (Opcional) Podemos hacer que el contador (el círculo rojo) también brille
+        const badge = document.getElementById("contadorNav");
+        if (badge) {
+            badge.style.backgroundColor = "#ffc107";
+            badge.style.color = "#000";
+            setTimeout(() => {
+                badge.style.backgroundColor = ""; // Vuelve al rojo original
+                badge.style.color = "";
+            }, 500);
+        }
+    }
+}
+
 function agregarDesdeDetalle(prod, cant) {
     const agregadoNombre = document.getElementById("agregado-seleccionado")?.value || "";
     const precioBaseElegido = parseFloat(document.getElementById("precio-seleccionado")?.value) || prod.precio;
     
-    // Capturar adicionales marcados
     let adicionalesElegidos = [];
     let montoAdicionales = 0;
     
@@ -256,7 +274,6 @@ function agregarDesdeDetalle(prod, cant) {
 
     const precioUnitarioFinal = precioBaseElegido + montoAdicionales;
     
-    // Nombre que aparecerá en el carrito y WhatsApp
     let nombreFinal = (prod.categoria === "hamburguesas" && agregadoNombre) 
         ? `${prod.nombre} (${agregadoNombre})` 
         : prod.nombre;
@@ -265,7 +282,6 @@ function agregarDesdeDetalle(prod, cant) {
         nombreFinal += ` + [${adicionalesElegidos.join(", ")}]`;
     }
 
-    // Identificador único (para que si agrega una burger con bacon y otra sin, sean items distintos)
     const idUnico = nombreFinal;
 
     const existe = carrito.find(p => p.idUnico === idUnico);
@@ -282,7 +298,8 @@ function agregarDesdeDetalle(prod, cant) {
     }
     
     actualizarCarrito();
-    // ... resto de tu feedback de botón
+    animarCarrito();
+    volverAlCatalogo();
 }
 
 function actualizarCarrito() {
@@ -296,7 +313,6 @@ function actualizarCarrito() {
         total += sub; 
         items += p.cantidad;
 
-        // --- LÓGICA DE CORRECCIÓN: Separar Nombre, Tamaño y Adicionales ---
         const regexTamaño = /\((.*?)\)/;
         const regexAdicionales = /\[(.*?)\]/;
         
@@ -306,7 +322,6 @@ function actualizarCarrito() {
         const nombreLimpio = p.nombre.split('(')[0].split('+')[0].trim();
         const tamaño = tamañoMatch ? tamañoMatch[1] : "";
         const listaAdics = adicionalesMatch ? adicionalesMatch[1].split(', ') : [];
-        // -----------------------------------------------------------------
 
         html += `
             <div class="mb-4 border-bottom pb-3">
@@ -316,9 +331,7 @@ function actualizarCarrito() {
                     </div>
                     <div class="col-9">
                         <h6 class="mb-0 fw-bold text-uppercase" style="font-size:0.85rem;">${nombreLimpio}</h6>
-                        
                         ${tamaño ? `<span class="badge-reco-yellow">${tamaño.toUpperCase()}</span>` : ''}
-                        
                         ${listaAdics.length > 0 ? `
                             <div class="mt-2">
                                 <small class="text-muted d-block fw-bold" style="font-size:0.65rem;">ADICIONALES:</small>
@@ -378,31 +391,28 @@ async function enviarPedidoWhatsApp() {
     const nom = document.getElementById('nombreCliente')?.value.trim().toUpperCase();
     const dir = document.getElementById('direccionModal')?.value.trim().toUpperCase();
     const tel = document.getElementById('telefonoCliente')?.value.trim() || "N/A";
+    
     if (!estaAbierto()) return mostrarAvisoCerrado();
     if (!nom || !dir) {
         document.getElementById('nombreCliente').classList.add("is-invalid");
         document.getElementById('direccionModal').classList.add("is-invalid");
         return mostrarToast("⚠️ Completa nombre y dirección");
     }
+
     let total = 0, itemsWS = "", itemsSheets = [];
     carrito.forEach(p => {
         total += (p.precio * p.cantidad);
         itemsSheets.push(`${p.cantidad}x ${p.nombre.toUpperCase()}`);
         itemsWS +=`✅ ${p.cantidad}x - ${p.nombre.toUpperCase()}\n`;
     });
+
     const pedidoNum = obtenerSiguientePedido();
     const fecha = new Date().toLocaleString('es-AR');
     enviarPedidoASheets({ pedido: pedidoNum, fecha, cliente: nom, telefono: tel, productos: itemsSheets.join(", "), total, direccion: dir });
     
     const linkApp = "link.mercadopago.com.ar/home"; 
-    
     let msg =`🛒 *PEDIDO N° ${pedidoNum}*\n📅 ${fecha}\n👤 *CLIENTE:* ${nom}\n--------------------------\n${itemsWS}--------------------------\n📍 *Dirección:* ${dir}\n💰 *Total:* $${total.toLocaleString('es-AR')}\n\n`;
-    msg +=`🤝 *MERCADO PAGO:*\n`;
-    msg +=`📲 *TOCÁ EN "INICIAR SESIÓN"*\n`;
-    msg +=`👇 App: ${linkApp}\n`;
-    msg +=`👉 Alias: *Alias-ejemplo*\n`;
-    msg +=`😎 *No olvides mandar el comprobante de pago*\n\n`;
-    msg +=`🙏 ¡Muchas gracias!`;
+    msg +=`🤝 *MERCADO PAGO:*\n📲 *TOCÁ EN "INICIAR SESIÓN"*\n👇 App: ${linkApp}\n👉 Alias: *Alias-ejemplo*\n😎 *No olvides mandar el comprobante de pago*\n\n🙏 ¡Muchas gracias!`;
 
     window.open(`https://wa.me/5491127461954?text=${encodeURIComponent(msg)}`, '_blank');
 }

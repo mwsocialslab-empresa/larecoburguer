@@ -172,24 +172,29 @@ function verDetalle(index, cantidadPrevia = 1) {
    ========================================== */
 function agregarDesdeDetalle(prod, cant) {
     const agregadoNom = document.getElementById("agregado-seleccionado")?.value || "";
-    const precioBase = parseFloat(document.getElementById("precio-seleccionado")?.value) || prod.precio;
+    const precioBaseIndividual = parseFloat(document.getElementById("precio-seleccionado")?.value) || prod.precio;
     
     let adicsNom = [];
     let extraPrecio = 0;
+    
+    // Recolectamos adicionales seleccionados
     document.querySelectorAll('.check-adicional:checked').forEach(c => {
         adicsNom.push(c.getAttribute('data-nombre').toUpperCase());
         extraPrecio += parseFloat(c.value);
     });
 
+    // --- FIX: Definición de nombreFinal ---
     let nombreFinal = prod.nombre.toUpperCase();
     if (agregadoNom) nombreFinal += ` (${agregadoNom.toUpperCase()})`;
     if (adicsNom.length > 0) nombreFinal += ` + [${adicsNom.join(", ")}]`;
 
+    // Agregamos al carrito con todos los datos necesarios para el diseño
     carrito.push({
         ...prod,
         nombreCompleto: nombreFinal,
         nombreBase: prod.nombre,
-        precio: precioBase + extraPrecio,
+        precioBaseIndividual: precioBaseIndividual, // Para mostrar el precio de la medida a la derecha
+        precio: precioBaseIndividual + extraPrecio, // Precio unitario total
         cantidad: cant,
         imagen: prod.imagen.startsWith('http') ? prod.imagen : `./${prod.imagen}`
     });
@@ -203,72 +208,74 @@ function agregarDesdeDetalle(prod, cant) {
 function actualizarCarrito() {
     const lista = document.getElementById("listaModal");
     const totalModal = document.getElementById("totalModal");
-    const badgeNav = document.getElementById("contadorNav");
-    let html = "", total = 0, items = 0;
+    const badgeNav = document.getElementById("contadorNav"); // Referencia al número del carrito
+    let html = "", total = 0, itemsTotales = 0;
 
     carrito.forEach((p, i) => {
         const sub = p.precio * p.cantidad;
-        total += sub; 
-        items += p.cantidad;
+        total += sub;
+        itemsTotales += p.cantidad; // Sumamos las cantidades para el contador
 
-        // --- LÓGICA DE SEPARACIÓN PARA EL DISEÑO ---
-        // Extraemos la medida (ej: TRIPLE) que está entre paréntesis
-        const regexMedida = /\((.*?)\)/;
-        const coincidenciaMedida = p.nombreCompleto.match(regexMedida);
-        const medida = coincidenciaMedida ? coincidenciaMedida[1] : "";
-
-        // Extraemos los adicionales que están entre corchetes ej: [BACON, HUEVO]
-        const regexAdics = /\[(.*?)\]/;
-        const coincidenciaAdics = p.nombreCompleto.match(regexAdics);
-        const listaAdicionales = coincidenciaAdics ? coincidenciaAdics[1].split(", ") : [];
+        // Extraemos medida y adicionales
+        const medidaMatch = p.nombreCompleto.match(/\((.*?)\)/);
+        const adicsMatch = p.nombreCompleto.match(/\[(.*?)\]/);
+        
+        const medida = medidaMatch ? medidaMatch[1] : "";
+        const listaAdics = adicsMatch ? adicsMatch[1].split(", ") : [];
 
         html += `
             <div class="mb-4 border-bottom pb-3">
-                <div class="row gx-2">
-                    <div class="col-3">
-                        <img src="${p.imagen}" class="img-fluid rounded shadow-sm" style="height:70px; width:70px; object-fit:cover;">
-                    </div>
-                    
-                    <div class="col-9">
-                        <h6 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px;">${p.nombreBase}</h6>
+                <div class="d-flex gap-3">
+                    <img src="${p.imagen}" style="width:70px; height:70px; object-fit:cover;" class="rounded shadow-sm">
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">${p.nombreBase.toUpperCase()}</h6>
                         
-                        ${medida ? `<div class="mb-2"><span class="badge-reco-yellow">${medida.toUpperCase()}</span></div>` : ''}
-                        
-                        ${listaAdicionales.length > 0 ? `
-                            <div class="mt-1">
-                                <span class="text-muted fw-bold" style="font-size: 0.7rem;">ADICIONALES:</span>
-                                <div class="d-flex flex-wrap gap-1 mt-1">
-                                    ${listaAdicionales.map(a => `<span class="badge-reco-yellow-sm">${a.toUpperCase()}</span>`).join('')}
-                                </div>
+                        ${medida ? `
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge-reco-yellow">${medida.toUpperCase()}</span>
+                                <span class="text-success fw-bold small">$${p.precioBaseIndividual?.toLocaleString('es-AR') || ''}</span>
                             </div>
+                        ` : ''}
+                        
+                        ${listaAdics.length > 0 ? `
+                            <div class="small fw-bold text-muted mb-1">ADICIONALES:</div>
+                            ${listaAdics.map(a => {
+                                const infoAdic = OPCIONES_ADICIONALES.find(o => o.nombre.toUpperCase() === a.trim().toUpperCase());
+                                const precioAdic = infoAdic ? `+$${infoAdic.precio.toLocaleString('es-AR')}` : "";
+                                return `
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="badge-reco-yellow-sm">${a}</span>
+                                        <span class="text-success fw-bold small">${precioAdic}</span>
+                                    </div>`;
+                            }).join('')}
                         ` : ''}
                     </div>
                 </div>
 
-                <div class="row gx-2 align-items-center mt-3">
-                    <div class="col-5">
-                        <div class="input-group input-group-sm border rounded-pill overflow-hidden">
-                            <button class="btn btn-light btn-sm px-3" onclick="modificarCantidadCarrito(${i},-1)"><i class="bi bi-dash"></i></button>
-                            <span class="form-control text-center border-0 bg-white fw-bold">${p.cantidad}</span>
-                            <button class="btn btn-light btn-sm px-3" onclick="modificarCantidadCarrito(${i},1)"><i class="bi bi-plus"></i></button>
-                        </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="input-group input-group-sm border rounded-pill overflow-hidden" style="width:100px;">
+                        <button class="btn btn-sm px-2" onclick="modificarCantidadCarrito(${i},-1)">-</button>
+                        <span class="form-control text-center border-0 bg-transparent fw-bold p-0" style="line-height:30px;">${p.cantidad}</span>
+                        <button class="btn btn-sm px-2" onclick="modificarCantidadCarrito(${i},1)">+</button>
                     </div>
-                   <div class="col-4 text-center d-flex justify-content-center gap-2">
-                        <button class="btn btn-link btn-sm text-warning text-decoration-none fw-bold p-0" style="font-size: 0.75rem;" onclick="editarProductoCarrito(${i})">EDITAR</button>
-                        <button class="btn btn-link btn-sm text-danger text-decoration-none fw-bold p-0" style="font-size: 0.75rem;" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-link btn-sm text-warning fw-bold text-decoration-none p-0" onclick="editarProductoCarrito(${i})">EDITAR</button>
+                        <button class="btn btn-link btn-sm text-danger fw-bold text-decoration-none p-0" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
                     </div>
-                    <div class="col-3 text-end">
-                        <span class="fw-bold" style="font-size: 1.1rem;">$${sub.toLocaleString('es-AR')}</span>
-                    </div>
+                    
+                    <span class="fw-bold" style="font-size: 1.1rem;">$${sub.toLocaleString('es-AR')}</span>
                 </div>
             </div>`;
     });
 
-    lista.innerHTML = html || "<p class='text-center py-4'>Tu carrito está vacío 🍔</p>";
-    totalModal.innerText = `$${total.toLocaleString('es-AR')}`;
+    lista.innerHTML = html || "<p class='text-center py-4'>Tu pedido está vacío 🍔</p>";
+    totalModal.innerText = total.toLocaleString('es-AR'); 
+
+    // --- ARREGLO DEL CONTADOR ---
     if (badgeNav) {
-        badgeNav.innerText = items;
-        badgeNav.style.display = items > 0 ? "block" : "none";
+        badgeNav.innerText = itemsTotales; // Ponemos el número total de productos
+        badgeNav.style.display = itemsTotales > 0 ? "flex" : "none"; // Si es 0 se oculta
     }
 }
 

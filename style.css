@@ -257,7 +257,9 @@ body.menu-open {
     font-weight: 700;
     border: 1px solid #333;
 }
-
+.rounded-pill {
+    border-radius: 50px !important;
+}
 .text-success {
     color: #28a745 !important;
 }

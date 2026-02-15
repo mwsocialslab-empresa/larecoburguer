@@ -201,7 +201,6 @@ function agregarDesdeDetalle(prod, cant) {
 
     actualizarCarrito();
     animarCarrito();
-    mostrarToast("¡Añadido! 🍔");
     volverAlCatalogo();
 }
 
@@ -277,6 +276,104 @@ function actualizarCarrito() {
         badgeNav.innerText = itemsTotales; // Ponemos el número total de productos
         badgeNav.style.display = itemsTotales > 0 ? "flex" : "none"; // Si es 0 se oculta
     }
+}
+async function enviarPedidoWhatsApp() {
+    // 1. Obtenemos los elementos para poder manipular sus clases
+    const inputNom = document.getElementById('nombreCliente');
+    const inputDir = document.getElementById('direccionModal');
+    const inputTel = document.getElementById('telefonoCliente');
+
+    const nom = inputNom?.value.trim().toUpperCase();
+    const dir = inputDir?.value.trim().toUpperCase();
+    const tel = inputTel?.value.trim();
+    
+    if (!estaAbierto()) return mostrarAvisoCerrado();
+    
+    // 2. Limpiamos los estados de error SIEMPRE al inicio
+    inputNom?.classList.remove("is-invalid");
+    inputDir?.classList.remove("is-invalid");
+    inputTel?.classList.remove("is-invalid");
+
+    // 3. Validamos: si falta CUALQUIERA, marcamos y cortamos
+    if (!nom || !dir || !tel) {
+        if (!nom) inputNom?.classList.add("is-invalid");
+        if (!dir) inputDir?.classList.add("is-invalid");
+        if (!tel) inputTel?.classList.add("is-invalid");
+        
+        return mostrarToast("⚠️ Completa los campos en rojo");
+    }
+
+    let total = 0, itemsWS = "", itemsSheets = [];
+    
+    carrito.forEach(p => {
+        const subtotal = p.precio * p.cantidad;
+        total += subtotal;
+
+        // Extraemos medida y adicionales del nombre completo
+        const medidaMatch = p.nombreCompleto.match(/\((.*?)\)/);
+        const adicsMatch = p.nombreCompleto.match(/\[(.*?)\]/);
+        const medida = medidaMatch ? medidaMatch[1].toUpperCase() : "";
+        const listaAdics = adicsMatch ? adicsMatch[1].toUpperCase() : "";
+
+        // Formato para Sheets
+        let detalleSheet = `${p.cantidad}x ${p.nombreBase.toUpperCase()}`;
+        if (medida) detalleSheet += ` (${medida})`;
+        if (listaAdics) detalleSheet += ` + [${listaAdics}]`;
+        itemsSheets.push(detalleSheet);
+
+        // Formato para WhatsApp
+        itemsWS += `✅ ${p.cantidad}x ${p.nombreBase.toUpperCase()}\n`;
+        if (medida) itemsWS += `   └ Medida: ${medida}\n`;
+        if (listaAdics) itemsWS += `   └ Extras: ${listaAdics}\n`;
+        itemsWS += `   Subtotal: $${subtotal.toLocaleString('es-AR')}\n\n`;
+    });
+
+    const pedidoNum = obtenerSiguientePedido();
+    const fecha = new Date().toLocaleString('es-AR');
+
+    // 4. Envío a Sheets (esto es asíncrono, no bloquea el WhatsApp)
+    enviarPedidoASheets({ 
+        pedido: pedidoNum, 
+        fecha, 
+        cliente: nom, 
+        telefono: tel, 
+        productos: itemsSheets.join(", "), 
+        total, 
+        direccion: dir 
+    });
+    
+    const linkApp = "link.mercadopago.com.ar/home"; 
+    
+    let msg = `🛒 *PEDIDO N° ${pedidoNum}*\n📅 ${fecha}\n👤 *CLIENTE:* ${nom}\n--------------------------\n${itemsWS}--------------------------\n📍 *Dirección:* ${dir}\n💰 *Total:* $${total.toLocaleString('es-AR')}\n\n`;
+    msg += `🤝 *MERCADO PAGO:*\n`;
+    msg += `📲 *TOCÁ EN "INICIAR SESIÓN"*\n`;
+    msg += `👇 App: ${linkApp}\n`;
+    msg += `👉 Alias: *Alias-Ejemplo*\n`;
+    msg += `😎 *No olvides mandar el comprobante de pago*\n\n`;
+    msg += `🙏 ¡Muchas gracias!`;
+
+    // 5. URL final corregida (aseguramos el formato internacional)
+    const urlWhatsApp = `https://api.whatsapp.com/send?phone=5491127461954&text=${encodeURIComponent(msg)}`;
+    window.open(urlWhatsApp, '_blank');
+}
+async function enviarPedidoASheets(datos) {
+    try { 
+        await fetch(URL_SHEETS, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(datos) 
+        }); 
+        console.log("Pedido enviado a Sheets correctamente.");
+    } catch (e) { 
+        console.error("Error al enviar a Sheets:", e); 
+    }
+}
+function obtenerSiguientePedido() {
+    let cuenta = (parseInt(localStorage.getItem('contadorAbsoluto')) || 1);
+    localStorage.setItem('contadorAbsoluto', cuenta + 1);
+    // Formato profesional: bloque-correlativo
+    return `${Math.floor(cuenta / 10000).toString().padStart(3, '0')}-${(cuenta % 10000).toString().padStart(4, '0')}`;
 }
 
 function editarProductoCarrito(index) {

@@ -253,8 +253,9 @@ function actualizarCarrito() {
                             <button class="btn btn-light btn-sm px-3" onclick="modificarCantidadCarrito(${i},1)"><i class="bi bi-plus"></i></button>
                         </div>
                     </div>
-                    <div class="col-4 text-center">
-                        <button class="btn btn-link btn-sm text-danger text-decoration-none fw-bold" style="font-size: 0.75rem;" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
+                   <div class="col-4 text-center d-flex justify-content-center gap-2">
+                        <button class="btn btn-link btn-sm text-warning text-decoration-none fw-bold p-0" style="font-size: 0.75rem;" onclick="editarProductoCarrito(${i})">EDITAR</button>
+                        <button class="btn btn-link btn-sm text-danger text-decoration-none fw-bold p-0" style="font-size: 0.75rem;" onclick="eliminarDelCarrito(${i})">ELIMINAR</button>
                     </div>
                     <div class="col-3 text-end">
                         <span class="fw-bold" style="font-size: 1.1rem;">$${sub.toLocaleString('es-AR')}</span>
@@ -273,16 +274,67 @@ function actualizarCarrito() {
 
 function editarProductoCarrito(index) {
     const item = carrito[index];
-    const cantActual = item.cantidad; // Guardamos la cantidad previa
     const idxGlobal = productosGlobal.findIndex(p => p.nombre.toUpperCase() === item.nombreBase.toUpperCase());
     
     if (idxGlobal !== -1) {
+        // 1. Extraer medida y adicionales del nombre guardado
+        const medidaMatch = item.nombreCompleto.match(/\((.*?)\)/);
+        const medidaPrevia = medidaMatch ? medidaMatch[1] : "";
+        const adicsMatch = item.nombreCompleto.match(/\[(.*?)\]/);
+        const listaAdicsPrevia = adicsMatch ? adicsMatch[1].split(", ") : [];
+
+        // 2. Cerrar carrito y abrir detalle
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCarrito')).hide();
-        verDetalle(idxGlobal, cantActual); // La pasamos a verDetalle
+        verDetalle(idxGlobal, item.cantidad);
+
+        // 3. Restaurar lo que ya estaba seleccionado (con un pequeño delay para que cargue el HTML)
+        setTimeout(() => {
+            // Seleccionar el tamaño (Medida)
+            if (medidaPrevia) {
+                document.querySelectorAll('.btn-selector').forEach(btn => {
+                    if (btn.innerText.trim() === medidaPrevia.toUpperCase()) btn.click();
+                });
+            }
+
+            // Marcar los adicionales (Checks)
+            if (listaAdicsPrevia.length > 0) {
+                listaAdicsPrevia.forEach(nombreAdic => {
+                    document.querySelectorAll('.check-adicional').forEach(check => {
+                        if (check.getAttribute('data-nombre').toUpperCase() === nombreAdic.trim().toUpperCase()) {
+                            check.checked = true;
+                        }
+                    });
+                });
+                recalcularPrecioDinamico();
+            }
+        }, 100);
+
+        // 4. Sacar del carrito el item viejo
         carrito.splice(index, 1);
         actualizarCarrito();
     }
 }
+/* ==========================================
+   🔹 FUNCIÓN PARA LOS BOTONES + Y - DEL DETALLE
+   ========================================== */
+/* ==========================================
+   🔹 ACTUALIZACIÓN DE CANTIDAD Y PRECIO DINÁMICO
+   ========================================== */
+function cambiarCantidadDetalle(valor) {
+    const inputCant = document.getElementById("cant-detalle");
+    if (inputCant) {
+        let actual = parseInt(inputCant.value) || 1;
+        let nueva = actual + valor;
+        
+        if (nueva >= 1) {
+            inputCant.value = nueva;
+            // Llamamos a la función que ya tenés para que multiplique el precio por la nueva cantidad
+            recalcularPrecioDinamico();
+        }
+    }
+}
+
+// Modificamos levemente esta para que incluya la multiplicación por cantidad
 
 /* ==========================================
    🔹 UTILIDADES EXTRAS
@@ -296,6 +348,25 @@ function configurarEventosBotones() {
             if (productoSeleccionado) agregarDesdeDetalle(productoSeleccionado, cant);
         };
     }
+
+    // --- NUEVA LÓGICA PARA BOTONES + y - EN DETALLE ---
+    const btnMas = document.querySelector(".btn-detalle-mas");
+    const btnMenos = document.querySelector(".btn-detalle-menos");
+    const inputCant = document.getElementById("cant-detalle");
+
+    if (btnMas && inputCant) {
+        btnMas.onclick = () => {
+            let actual = parseInt(inputCant.value) || 1;
+            inputCant.value = actual + 1;
+        };
+    }
+
+    if (btnMenos && inputCant) {
+        btnMenos.onclick = () => {
+            let actual = parseInt(inputCant.value) || 1;
+            if (actual > 1) inputCant.value = actual - 1;
+        };
+    }
 }
 
 function seleccionarOpcion(el, nom, pre) {
@@ -307,12 +378,27 @@ function seleccionarOpcion(el, nom, pre) {
 }
 
 function recalcularPrecioDinamico() {
+    // 1. Obtenemos el precio base (ya sea el seleccionado en los botones amarillos o el original)
     const base = parseFloat(document.getElementById("precio-seleccionado")?.value) || productoSeleccionado?.precio || 0;
+    
+    // 2. Obtenemos la cantidad del input (el número 9 de tu imagen)
+    const cantidad = parseInt(document.getElementById("cant-detalle")?.value) || 1;
+    
+    // 3. Sumamos todos los adicionales seleccionados
     let extra = 0;
-    document.querySelectorAll('.check-adicional:checked').forEach(c => extra += parseFloat(c.value));
-    document.getElementById("detalle-precio").innerText = `$${(base + extra).toLocaleString('es-AR')}`;
+    document.querySelectorAll('.check-adicional:checked').forEach(c => {
+        extra += parseFloat(c.value);
+    });
+    
+    // 4. Calculamos el total: (Precio Base + Extras) x Cantidad
+    const totalVenta = (base + extra) * cantidad;
+    
+    // 5. Mostramos el resultado final bajo el nombre Tasty
+    const elementoPrecio = document.getElementById("detalle-precio");
+    if (elementoPrecio) {
+        elementoPrecio.innerText = `$${totalVenta.toLocaleString('es-AR')}`;
+    }
 }
-
 function volverAlCatalogo() {
     document.getElementById("hero").classList.remove("d-none");
     document.getElementById("contenedor-catalogo").classList.remove("d-none");

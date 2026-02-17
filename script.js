@@ -73,6 +73,10 @@ function cargarDesdeSheets() {
         });
 }
 
+
+/* ==========================================
+   🔹 2. DATOS Y RENDERIZADO (Corregido)
+   ========================================== */
 function renderizarProductos(data) {
     const contenedor = document.getElementById("productos");
     if (!contenedor) return;
@@ -86,7 +90,9 @@ function renderizarProductos(data) {
             data[cat].forEach(p => {
                 const precio = parseFloat(p.precio) || 0;
                 productosGlobal.push({ ...p, precio, categoria: cat });
-                const rutaImg = p.imagen.startsWith('http') ? p.imagen : `./${p.imagen}`;
+                
+                // Si la imagen no empieza con http, la tratamos como ruta local directa
+                const rutaImg = (p.imagen && p.imagen.startsWith('http')) ? p.imagen : p.imagen;
 
                 htmlFinal += `
                     <div class="col-12 col-md-6 producto" data-categoria="${cat}">
@@ -109,7 +115,7 @@ function renderizarProductos(data) {
 }
 
 /* ==========================================
-   🔹 3. VISTA DETALLE (Fix Amarillo y Títulos)
+   🔹 3. VISTA DETALLE (Única versión corregida)
    ========================================== */
 function verDetalle(index, cantidadPrevia = 1) {
     const p = productosGlobal[index];
@@ -117,10 +123,13 @@ function verDetalle(index, cantidadPrevia = 1) {
     
     productoSeleccionado = { ...p, indexGlobal: index };
     
-    document.getElementById("detalle-img").src = p.imagen.startsWith('http') ? p.imagen : `./${p.imagen}`;
+    // Normalizamos la ruta igual que en el catálogo
+    const rutaImg = (p.imagen && p.imagen.startsWith('http')) ? p.imagen : p.imagen;
+    document.getElementById("detalle-img").src = rutaImg;
+
     document.getElementById("detalle-nombre").innerText = p.nombre.toUpperCase();
     document.getElementById("detalle-descripcion").innerText = p.detalle || 'Opción de La Reco.';
-    document.getElementById("cant-detalle").value = cantidadPrevia; // Mantiene la cantidad si venimos de Editar
+    document.getElementById("cant-detalle").value = cantidadPrevia;
 
     const contAgregados = document.getElementById("contenedor-agregados");
     const contAdicionales = document.getElementById("contenedor-adicionales");
@@ -139,7 +148,6 @@ function verDetalle(index, cantidadPrevia = 1) {
                 const parts = opt.split(":");
                 const nom = parts[0].trim();
                 const pre = parseFloat(parts[1]) || p.precio;
-                // Clase btn-selector para el estilo amarillo
                 htmlBotones += `<button type="button" class="btn btn-outline-dark btn-selector ${i === 0 ? 'btn-selector-active' : ''}" onclick="seleccionarOpcion(this, '${nom}', ${pre})">${nom.toUpperCase()}</button>`;
             });
             htmlBotones += `</div><input type="hidden" id="agregado-seleccionado" value="${opciones[0].split(":")[0].trim()}"><input type="hidden" id="precio-seleccionado" value="${parseFloat(opciones[0].split(":")[1]) || p.precio}">`;
@@ -158,6 +166,9 @@ function verDetalle(index, cantidadPrevia = 1) {
                 </div>`;
         });
         listaAdics.innerHTML = htmlChecks;
+    } else {
+        contAdicionales.classList.add("d-none");
+        contAgregados.classList.add("d-none");
     }
 
     document.getElementById("hero").classList.add("d-none");
@@ -166,7 +177,6 @@ function verDetalle(index, cantidadPrevia = 1) {
     window.scrollTo(0,0);
     recalcularPrecioDinamico();
 }
-
 /* ==========================================
    🔹 4. CARRITO (Fix Editar y Badges)
    ========================================== */

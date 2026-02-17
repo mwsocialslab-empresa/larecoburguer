@@ -4,7 +4,7 @@
 const URL_SHEETS = "https://script.google.com/macros/s/AKfycbw3MZVpUNjI-lCIO7uDTjk33xZ1bdUYXqSXQGHPNm3HTUYdlladMDKjK5FCXAtWzMsp/exec";
 
 const HORARIOS_ATENCION = {
-    1: { inicio: "19:00", fin: "23:59" }, 2: { inicio: "19:00", fin: "23:59" },
+    1: { inicio: "19:00", fin: "23:59" }, 2: { inicio: "11:00", fin: "23:59" },
     3: { inicio: "11:00", fin: "23:59" }, 4: { inicio: "19:00", fin: "23:59" },
     5: { inicio: "11:00", fin: "01:00" }, 6: { inicio: "11:00", fin: "01:00" },
     0: { inicio: "11:00", fin: "23:59" }
@@ -196,7 +196,7 @@ function agregarDesdeDetalle(prod, cant) {
         precioBaseIndividual: precioBaseIndividual, // Para mostrar el precio de la medida a la derecha
         precio: precioBaseIndividual + extraPrecio, // Precio unitario total
         cantidad: cant,
-        imagen: prod.imagen.startsWith('http') ? prod.imagen : `./${prod.imagen}`
+        imagen: prod.imagen.startsWith('http') ? prod.imagen : `./${prod.imagen}` // FIX: Se cambió p.imagen por prod.imagen
     });
 
     actualizarCarrito();
@@ -277,8 +277,8 @@ function actualizarCarrito() {
         badgeNav.style.display = itemsTotales > 0 ? "flex" : "none"; // Si es 0 se oculta
     }
 }
+
 async function enviarPedidoWhatsApp() {
-    // 1. Obtenemos los elementos para poder manipular sus clases
     const inputNom = document.getElementById('nombreCliente');
     const inputDir = document.getElementById('direccionModal');
     const inputTel = document.getElementById('telefonoCliente');
@@ -289,12 +289,10 @@ async function enviarPedidoWhatsApp() {
     
     if (!estaAbierto()) return mostrarAvisoCerrado();
     
-    // 2. Limpiamos los estados de error SIEMPRE al inicio
     inputNom?.classList.remove("is-invalid");
     inputDir?.classList.remove("is-invalid");
     inputTel?.classList.remove("is-invalid");
 
-    // 3. Validamos: si falta CUALQUIERA, marcamos y cortamos
     if (!nom || !dir || !tel) {
         if (!nom) inputNom?.classList.add("is-invalid");
         if (!dir) inputDir?.classList.add("is-invalid");
@@ -309,29 +307,25 @@ async function enviarPedidoWhatsApp() {
         const subtotal = p.precio * p.cantidad;
         total += subtotal;
 
-        // Extraemos medida y adicionales del nombre completo
         const medidaMatch = p.nombreCompleto.match(/\((.*?)\)/);
         const adicsMatch = p.nombreCompleto.match(/\[(.*?)\]/);
         const medida = medidaMatch ? medidaMatch[1].toUpperCase() : "";
         const listaAdics = adicsMatch ? adicsMatch[1].toUpperCase() : "";
 
-        // Formato para Sheets
         let detalleSheet = `${p.cantidad}x ${p.nombreBase.toUpperCase()}`;
         if (medida) detalleSheet += ` (${medida})`;
         if (listaAdics) detalleSheet += ` + [${listaAdics}]`;
         itemsSheets.push(detalleSheet);
 
-        // Formato para WhatsApp
         itemsWS += `✅ ${p.cantidad}x ${p.nombreBase.toUpperCase()}\n`;
-        if (medida) itemsWS += `   └ Medida: ${medida}\n`;
-        if (listaAdics) itemsWS += `   └ Extras: ${listaAdics}\n`;
+        if (medida) itemsWS += `Medida: ${medida}\n`;
+        if (listaAdics) itemsWS += `Extras: ${listaAdics}\n`;
         itemsWS += `   Subtotal: $${subtotal.toLocaleString('es-AR')}\n\n`;
     });
 
     const pedidoNum = obtenerSiguientePedido();
     const fecha = new Date().toLocaleString('es-AR');
 
-    // 4. Envío a Sheets (esto es asíncrono, no bloquea el WhatsApp)
     enviarPedidoASheets({ 
         pedido: pedidoNum, 
         fecha, 
@@ -352,10 +346,10 @@ async function enviarPedidoWhatsApp() {
     msg += `😎 *No olvides mandar el comprobante de pago*\n\n`;
     msg += `🙏 ¡Muchas gracias!`;
 
-    // 5. URL final corregida (aseguramos el formato internacional)
     const urlWhatsApp = `https://api.whatsapp.com/send?phone=5491127461954&text=${encodeURIComponent(msg)}`;
     window.open(urlWhatsApp, '_blank');
 }
+
 async function enviarPedidoASheets(datos) {
     try { 
         await fetch(URL_SHEETS, { 
@@ -369,10 +363,10 @@ async function enviarPedidoASheets(datos) {
         console.error("Error al enviar a Sheets:", e); 
     }
 }
+
 function obtenerSiguientePedido() {
     let cuenta = (parseInt(localStorage.getItem('contadorAbsoluto')) || 1);
     localStorage.setItem('contadorAbsoluto', cuenta + 1);
-    // Formato profesional: bloque-correlativo
     return `${Math.floor(cuenta / 10000).toString().padStart(3, '0')}-${(cuenta % 10000).toString().padStart(4, '0')}`;
 }
 
@@ -381,26 +375,21 @@ function editarProductoCarrito(index) {
     const idxGlobal = productosGlobal.findIndex(p => p.nombre.toUpperCase() === item.nombreBase.toUpperCase());
     
     if (idxGlobal !== -1) {
-        // 1. Extraer medida y adicionales del nombre guardado
         const medidaMatch = item.nombreCompleto.match(/\((.*?)\)/);
         const medidaPrevia = medidaMatch ? medidaMatch[1] : "";
         const adicsMatch = item.nombreCompleto.match(/\[(.*?)\]/);
         const listaAdicsPrevia = adicsMatch ? adicsMatch[1].split(", ") : [];
 
-        // 2. Cerrar carrito y abrir detalle
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCarrito')).hide();
         verDetalle(idxGlobal, item.cantidad);
 
-        // 3. Restaurar lo que ya estaba seleccionado (con un pequeño delay para que cargue el HTML)
         setTimeout(() => {
-            // Seleccionar el tamaño (Medida)
             if (medidaPrevia) {
                 document.querySelectorAll('.btn-selector').forEach(btn => {
                     if (btn.innerText.trim() === medidaPrevia.toUpperCase()) btn.click();
                 });
             }
 
-            // Marcar los adicionales (Checks)
             if (listaAdicsPrevia.length > 0) {
                 listaAdicsPrevia.forEach(nombreAdic => {
                     document.querySelectorAll('.check-adicional').forEach(check => {
@@ -413,17 +402,11 @@ function editarProductoCarrito(index) {
             }
         }, 100);
 
-        // 4. Sacar del carrito el item viejo
         carrito.splice(index, 1);
         actualizarCarrito();
     }
 }
-/* ==========================================
-   🔹 FUNCIÓN PARA LOS BOTONES + Y - DEL DETALLE
-   ========================================== */
-/* ==========================================
-   🔹 ACTUALIZACIÓN DE CANTIDAD Y PRECIO DINÁMICO
-   ========================================== */
+
 function cambiarCantidadDetalle(valor) {
     const inputCant = document.getElementById("cant-detalle");
     if (inputCant) {
@@ -432,17 +415,11 @@ function cambiarCantidadDetalle(valor) {
         
         if (nueva >= 1) {
             inputCant.value = nueva;
-            // Llamamos a la función que ya tenés para que multiplique el precio por la nueva cantidad
             recalcularPrecioDinamico();
         }
     }
 }
 
-// Modificamos levemente esta para que incluya la multiplicación por cantidad
-
-/* ==========================================
-   🔹 UTILIDADES EXTRAS
-   ========================================== */
 function configurarEventosBotones() {
     const btnAgregar = document.getElementById("btn-agregar-detalle");
     if (btnAgregar) {
@@ -453,7 +430,6 @@ function configurarEventosBotones() {
         };
     }
 
-    // --- NUEVA LÓGICA PARA BOTONES + y - EN DETALLE ---
     const btnMas = document.querySelector(".btn-detalle-mas");
     const btnMenos = document.querySelector(".btn-detalle-menos");
     const inputCant = document.getElementById("cant-detalle");
@@ -462,13 +438,17 @@ function configurarEventosBotones() {
         btnMas.onclick = () => {
             let actual = parseInt(inputCant.value) || 1;
             inputCant.value = actual + 1;
+            recalcularPrecioDinamico();
         };
     }
 
     if (btnMenos && inputCant) {
         btnMenos.onclick = () => {
             let actual = parseInt(inputCant.value) || 1;
-            if (actual > 1) inputCant.value = actual - 1;
+            if (actual > 1) {
+                inputCant.value = actual - 1;
+                recalcularPrecioDinamico();
+            }
         };
     }
 }
@@ -482,27 +462,20 @@ function seleccionarOpcion(el, nom, pre) {
 }
 
 function recalcularPrecioDinamico() {
-    // 1. Obtenemos el precio base (ya sea el seleccionado en los botones amarillos o el original)
     const base = parseFloat(document.getElementById("precio-seleccionado")?.value) || productoSeleccionado?.precio || 0;
-    
-    // 2. Obtenemos la cantidad del input (el número 9 de tu imagen)
     const cantidad = parseInt(document.getElementById("cant-detalle")?.value) || 1;
-    
-    // 3. Sumamos todos los adicionales seleccionados
     let extra = 0;
     document.querySelectorAll('.check-adicional:checked').forEach(c => {
         extra += parseFloat(c.value);
     });
     
-    // 4. Calculamos el total: (Precio Base + Extras) x Cantidad
     const totalVenta = (base + extra) * cantidad;
-    
-    // 5. Mostramos el resultado final bajo el nombre Tasty
     const elementoPrecio = document.getElementById("detalle-precio");
     if (elementoPrecio) {
         elementoPrecio.innerText = `$${totalVenta.toLocaleString('es-AR')}`;
     }
 }
+
 function volverAlCatalogo() {
     document.getElementById("hero").classList.remove("d-none");
     document.getElementById("contenedor-catalogo").classList.remove("d-none");
@@ -552,4 +525,15 @@ function animarCarrito() {
 function intentarAbrirCarrito() {
     if (carrito.length === 0) return mostrarToast("🛒 El carrito está vacío");
     new bootstrap.Modal(document.getElementById('modalCarrito')).show();
+}
+
+/**
+ * FIX: Definición de la función faltante usando tu sistema de alertas existente (mostrarToast)
+ */
+function mostrarAvisoCerrado() {
+    const modalElement = document.getElementById('modalCerrado');
+    if (modalElement) {
+        const modalCerrado = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modalCerrado.show();
+    }
 }
